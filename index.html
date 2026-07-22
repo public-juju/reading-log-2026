@@ -400,8 +400,15 @@ footer{padding:40px 0 60px; border-top:1px solid var(--line); font-size:12px; co
 .synopsis-author{font-size:13px; color:var(--gray-1); text-align:center; margin-top:4px; font-weight:600;}
 .synopsis-text{font-size:14px; line-height:1.7; color:var(--ink-soft); margin-top:18px;}
 .synopsis-source{font-size:11px; color:var(--gray-2); margin-top:16px; text-align:right;}
+.synopsis-btn-row{display:flex; gap:8px; margin-top:16px;}
+.synopsis-btn-row .synopsis-edit, .synopsis-btn-row .synopsis-delete{margin-top:0; flex:1;}
+.synopsis-edit{
+  font-family:'Pretendard',sans-serif; font-size:12.5px; font-weight:700;
+  padding:10px; border-radius:6px; border:1px solid var(--line); background:none; color:var(--ink-soft); cursor:pointer;
+}
+.synopsis-edit:hover{background:var(--bg); color:var(--ink);}
 .synopsis-delete{
-  margin-top:16px; width:100%; font-family:'Pretendard',sans-serif; font-size:12.5px; font-weight:700;
+  width:100%; font-family:'Pretendard',sans-serif; font-size:12.5px; font-weight:700;
   padding:10px; border-radius:6px; border:1px solid var(--line); background:none; color:#B3403C; cursor:pointer;
 }
 .synopsis-delete:hover{background:#FBEBEA; border-color:#B3403C;}
@@ -437,7 +444,7 @@ footer{padding:40px 0 60px; border-top:1px solid var(--line); font-size:12px; co
 /* CURRENTLY READING */
 .reading-now-wrap{margin:28px 0;}
 .reading-now-title{font-size:13px; font-weight:800; margin-bottom:12px; color:var(--ink);}
-.reading-now-list{display:grid; grid-template-columns:repeat(auto-fill, minmax(220px,1fr)); gap:14px;}
+.reading-now-list{display:grid; grid-template-columns:repeat(auto-fill, minmax(260px,1fr)); gap:14px;}
 .reading-now-card{
   display:flex; gap:12px; padding:14px; border:1px solid var(--line); border-radius:8px; background:var(--paper);
 }
@@ -456,6 +463,36 @@ footer{padding:40px 0 60px; border-top:1px solid var(--line); font-size:12px; co
 .reading-now-btn:hover{background:var(--line); color:var(--ink);}
 .reading-now-btn.primary{background:var(--ink); color:#fff; border-color:var(--ink);}
 .reading-now-btn.primary:hover{background:#000;}
+
+/* reading progress */
+.reading-now-progress{margin-top:10px;}
+.rnp-bar-track{height:6px; background:var(--line); border-radius:3px; overflow:hidden;}
+.rnp-bar-fill{height:100%; border-radius:3px; transition:width .2s ease;}
+.rnp-row{display:flex; align-items:center; gap:6px; margin-top:6px;}
+.rnp-input{
+  width:52px; font-family:'Pretendard',sans-serif; font-size:12px; padding:5px 6px;
+  border:1px solid var(--line); border-radius:6px; background:var(--paper); color:var(--ink); text-align:right;
+}
+.rnp-unit-toggle{display:flex; border:1px solid var(--line); border-radius:6px; overflow:hidden; flex-shrink:0;}
+.rnp-unit-btn{
+  font-family:'Pretendard',sans-serif; font-size:11px; font-weight:700; padding:5px 8px;
+  border:none; background:var(--paper); color:var(--gray-1); cursor:pointer;
+}
+.rnp-unit-btn.active{background:var(--ink); color:#fff;}
+.rnp-percent-label{font-size:11.5px; font-weight:700; color:var(--ink-soft); margin-left:auto; flex-shrink:0;}
+
+/* reading quick quote */
+.reading-now-quote-row{display:flex; gap:6px; margin-top:10px;}
+.reading-now-quote-input{
+  flex:1; min-width:0; font-family:'Pretendard',sans-serif; font-size:12px; padding:6px 8px;
+  border:1px solid var(--line); border-radius:6px; background:var(--paper); color:var(--ink);
+}
+.reading-now-quote-btn{
+  flex-shrink:0; font-family:'Pretendard',sans-serif; font-size:11.5px; font-weight:700; padding:6px 10px;
+  border:none; border-radius:6px; background:var(--ink); color:#fff; cursor:pointer;
+}
+.reading-now-quote-btn:hover{background:#000;}
+.reading-now-quote-hint{font-size:10.5px; color:#4CAF6D; margin-top:4px; height:12px; font-weight:600;}
 
 /* BOOK SEARCH (Aladin) */
 .ab-search-block{margin-bottom:20px; padding-bottom:18px; border-bottom:1px dashed var(--line);}
@@ -755,7 +792,10 @@ footer{padding:40px 0 60px; border-top:1px solid var(--line); font-size:12px; co
     <div class="synopsis-author" id="synopsisAuthor"></div>
     <div class="synopsis-text" id="synopsisText"></div>
     <div class="synopsis-source" id="synopsisSource"></div>
-    <button class="synopsis-delete" id="synopsisDeleteBtn">이 책 삭제하기</button>
+    <div class="synopsis-btn-row">
+      <button class="synopsis-edit" id="synopsisEditBtn">수정하기</button>
+      <button class="synopsis-delete" id="synopsisDeleteBtn">삭제하기</button>
+    </div>
   </div>
 </div>
 
@@ -1137,7 +1177,7 @@ const genreOrder = Object.keys(genreCounts).sort((a,b)=> genreCounts[b]-genreCou
 })();
 
 /* ---------------- currently reading ---------------- */
-(function buildReadingNow(){
+function buildReadingNow(){
   const wrap = document.getElementById('readingNowWrap');
   const list = document.getElementById('readingNowList');
   if(!reading.length){
@@ -1154,12 +1194,34 @@ const genreOrder = Object.keys(genreCounts).sort((a,b)=> genreCounts[b]-genreCou
     const coverHtml = r.cover
       ? `<img class="reading-now-cover" src="${r.cover}" alt="${r.title}">`
       : `<div class="reading-now-cover-fallback" style="background:${genreColor[r.genre]||'#999'}"><span>${r.title}</span></div>`;
+    const unit = r.progressUnit === '%' ? '%' : 'pages';
+    const rawVal = r.progressValue || 0;
+    const percent = unit === '%'
+      ? Math.min(100, Math.max(0, rawVal))
+      : (r.pages ? Math.min(100, Math.max(0, Math.round(rawVal / r.pages * 100))) : 0);
+    const barColor = genreColor[r.genre] || r.accent || '#999';
     card.innerHTML = `
       ${coverHtml}
       <div class="reading-now-info">
         <div class="reading-now-info-title">${r.title}</div>
         <div class="reading-now-info-meta">${r.author} · ${r.genre}</div>
         <div class="reading-now-info-days">${dstr(r.start)}부터 · ${daysSoFar}일째 읽는 중</div>
+        <div class="reading-now-progress">
+          <div class="rnp-bar-track"><div class="rnp-bar-fill" data-no="${r.no}" style="width:${percent}%; background:${barColor}"></div></div>
+          <div class="rnp-row">
+            <input type="number" class="rnp-input" data-no="${r.no}" min="0" ${unit==='%' ? 'max="100"' : (r.pages ? `max="${r.pages}"` : '')} value="${rawVal || ''}" placeholder="0">
+            <div class="rnp-unit-toggle">
+              <button type="button" class="rnp-unit-btn ${unit!=='%'?'active':''}" data-unit="pages" data-no="${r.no}">쪽</button>
+              <button type="button" class="rnp-unit-btn ${unit==='%'?'active':''}" data-unit="percent" data-no="${r.no}">%</button>
+            </div>
+            <span class="rnp-percent-label" data-no="${r.no}">${percent}%</span>
+          </div>
+        </div>
+        <div class="reading-now-quote-row">
+          <input type="text" class="reading-now-quote-input" data-no="${r.no}" placeholder="지금 읽은 문장을 바로 기록해보세요">
+          <button type="button" class="reading-now-quote-btn" data-no="${r.no}">추가</button>
+        </div>
+        <div class="reading-now-quote-hint" data-no="${r.no}"></div>
         <div class="reading-now-actions">
           <button class="reading-now-btn primary" data-no="${r.no}" data-action="finish">완독으로 표시</button>
           <button class="reading-now-btn" data-no="${r.no}" data-action="drop">중단으로 표시</button>
@@ -1177,7 +1239,74 @@ const genreOrder = Object.keys(genreCounts).sort((a,b)=> genreCounts[b]-genreCou
       else openConvertModal(r, '중단');
     });
   });
-})();
+  function updateProgressUI(no){
+    const r = reading.find(x=>x.no===no);
+    if(!r) return;
+    const unit = r.progressUnit === '%' ? '%' : 'pages';
+    const val = r.progressValue || 0;
+    const percent = unit === '%' ? Math.min(100, Math.max(0, val)) : (r.pages ? Math.min(100, Math.max(0, Math.round(val/r.pages*100))) : 0);
+    const bar = list.querySelector(`.rnp-bar-fill[data-no="${no}"]`);
+    if(bar) bar.style.width = percent + '%';
+    const label = list.querySelector(`.rnp-percent-label[data-no="${no}"]`);
+    if(label) label.textContent = percent + '%';
+  }
+  list.querySelectorAll('.rnp-input').forEach(inp=>{
+    inp.addEventListener('input', async ()=>{
+      const no = Number(inp.dataset.no);
+      const r = reading.find(x=>x.no===no);
+      if(!r) return;
+      r.progressValue = parseFloat(inp.value) || 0;
+      await storageSet('allReading', reading);
+      updateProgressUI(no);
+    });
+  });
+  list.querySelectorAll('.rnp-unit-btn').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      const no = Number(btn.dataset.no);
+      const r = reading.find(x=>x.no===no);
+      if(!r) return;
+      const newUnit = btn.dataset.unit === 'percent' ? '%' : 'pages';
+      const oldUnit = r.progressUnit === '%' ? '%' : 'pages';
+      if(newUnit === oldUnit) return;
+      if(newUnit === '%'){
+        r.progressValue = r.pages ? Math.min(100, Math.round((r.progressValue||0)/r.pages*100)) : 0;
+      } else {
+        r.progressValue = r.pages ? Math.round((r.progressValue||0)/100*r.pages) : 0;
+      }
+      r.progressUnit = newUnit;
+      await storageSet('allReading', reading);
+      buildReadingNow();
+    });
+  });
+  list.querySelectorAll('.reading-now-quote-btn').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      const no = btn.dataset.no;
+      const input = list.querySelector(`.reading-now-quote-input[data-no="${no}"]`);
+      const text = input.value.trim();
+      if(!text) return;
+      const quotes = (await storageGet('quotes')) || [];
+      quotes.push({bookNo: no, text, page: ''});
+      await storageSet('quotes', quotes);
+      input.value = '';
+      const hint = list.querySelector(`.reading-now-quote-hint[data-no="${no}"]`);
+      if(hint){
+        hint.textContent = '저장됐어요 ✓';
+        setTimeout(()=>{ hint.textContent = ''; }, 2000);
+      }
+      lastAddedBookNo = no;
+      renderQuotes();
+    });
+  });
+  list.querySelectorAll('.reading-now-quote-input').forEach(inp=>{
+    inp.addEventListener('keydown', (e)=>{
+      if(e.key === 'Enter'){
+        e.preventDefault();
+        list.querySelector(`.reading-now-quote-btn[data-no="${inp.dataset.no}"]`)?.click();
+      }
+    });
+  });
+}
+buildReadingNow();
 
 /* ---------------- legend (shelf) ---------------- */
 const legendEl = document.getElementById('legend');
@@ -1317,7 +1446,9 @@ refreshFormatSummary();
 
 /* ---------------- synopsis modal ---------------- */
 const synopsisOverlay = document.getElementById('synopsisOverlay');
+let currentSynopsisBook = null;
 async function openSynopsis(b){
+  currentSynopsisBook = b;
   const customSynopsis = (await storageGet('customSynopsis')) || {};
   const synopsis = synopsisData[b.no] || customSynopsis[b.no] || '아직 줄거리 정보가 없어요. 직접 추가한 책이라 자동으로 채워지지 않았어요.';
   const source = synopsisData[b.no] ? '교보문고' : (customSynopsis[b.no] ? '알라딘' : null);
@@ -1337,6 +1468,12 @@ async function openSynopsis(b){
 }
 document.getElementById('synopsisClose').addEventListener('click', ()=>{ synopsisOverlay.classList.remove('open'); });
 synopsisOverlay.addEventListener('click', (e)=>{ if(e.target === synopsisOverlay) synopsisOverlay.classList.remove('open'); });
+document.getElementById('synopsisEditBtn').addEventListener('click', ()=>{
+  if(!currentSynopsisBook) return;
+  const status = currentSynopsisBook.status === '완독' ? '완독' : '중단';
+  synopsisOverlay.classList.remove('open');
+  openEditBookModal(currentSynopsisBook, status);
+});
 document.getElementById('synopsisDeleteBtn').addEventListener('click', async ()=>{
   const btn = document.getElementById('synopsisDeleteBtn');
   const no = Number(btn.dataset.no);
@@ -1712,10 +1849,32 @@ dropped.forEach(d => {
 /* ---------------- quotes ---------------- */
 const quoteBookSelect = document.getElementById('quoteBookSelect');
 const quoteFilterSelect = document.getElementById('quoteFilterSelect');
-books.forEach(b=>{
-  const opt = document.createElement('option');
-  opt.value = b.no; opt.textContent = `${b.title} · ${b.author}`;
-  quoteBookSelect.appendChild(opt);
+function findBookByNo(no){
+  return books.find(b=>String(b.no)===String(no))
+    || reading.find(r=>String(r.no)===String(no))
+    || dropped.find(d=>String(d.no)===String(no));
+}
+if(books.length){
+  const ogDone = document.createElement('optgroup');
+  ogDone.label = '완독';
+  books.forEach(b=>{
+    const opt = document.createElement('option');
+    opt.value = b.no; opt.textContent = `${b.title} · ${b.author}`;
+    ogDone.appendChild(opt);
+  });
+  quoteBookSelect.appendChild(ogDone);
+}
+if(reading.length){
+  const ogReading = document.createElement('optgroup');
+  ogReading.label = '읽는 중';
+  reading.forEach(r=>{
+    const opt = document.createElement('option');
+    opt.value = r.no; opt.textContent = `${r.title} · ${r.author}`;
+    ogReading.appendChild(opt);
+  });
+  quoteBookSelect.appendChild(ogReading);
+}
+[...books, ...reading].forEach(b=>{
   const fopt = document.createElement('option');
   fopt.value = b.no; fopt.textContent = `${b.title} · ${b.author}`;
   quoteFilterSelect.appendChild(fopt);
@@ -1734,14 +1893,14 @@ async function renderQuotes(){
   const byBook = {};
   list.forEach((q, idx)=>{ (byBook[q.bookNo] = byBook[q.bookNo] || []).push({...q, idx}); });
   const bookNos = Object.keys(byBook).sort((a,b)=>{
-    const ba = books.find(x=>x.no==a), bb = books.find(x=>x.no==b);
+    const ba = findBookByNo(a), bb = findBookByNo(b);
     if(!ba || !bb) return 0;
     return new Date(ba.start) - new Date(bb.start);
   });
   const filterVal = quoteFilterSelect.value;
   bookNos.forEach(bookNo=>{
     if(filterVal !== 'all' && String(filterVal) !== String(bookNo)) return;
-    const book = books.find(b=>b.no == bookNo);
+    const book = findBookByNo(bookNo);
     const group = document.createElement('details');
     group.className = 'quote-group';
     // open this book's group if it's the filtered one, or the one just added to, otherwise closed
@@ -2191,13 +2350,13 @@ addBookForm.querySelectorAll('input[name="status"]').forEach(r=>{
   r.addEventListener('change', updateAbFieldsForStatus);
 });
 
-let abEditContext = null; // { no } when converting an existing "읽는 중" book
+let abEditContext = null; // { no, sourceStatus } when converting/editing an existing book
 
 function openConvertModal(readingBook, targetStatus){
   populateGenreSelect();
   resetAbSearch();
   abSelectedCover = readingBook.cover || null;
-  abEditContext = { no: readingBook.no };
+  abEditContext = { no: readingBook.no, sourceStatus: '읽는 중' };
   document.getElementById('addBookModalTitle').textContent =
     targetStatus === '완독' ? '완독으로 표시하기' : '중단으로 표시하기';
   document.querySelector(`input[name="status"][value="${targetStatus}"]`).checked = true;
@@ -2209,6 +2368,26 @@ function openConvertModal(readingBook, targetStatus){
   document.getElementById('abStart').value = readingBook.start || '';
   document.getElementById('abEnd').value = '';
   document.getElementById('abRating').value = 3;
+  updateAbFieldsForStatus();
+  addBookOverlay.classList.add('open');
+}
+
+function openEditBookModal(book, currentStatus){
+  populateGenreSelect();
+  resetAbSearch();
+  abSelectedCover = book.cover || null;
+  abEditContext = { no: book.no, sourceStatus: currentStatus };
+  document.getElementById('addBookModalTitle').textContent = '책 정보 수정하기';
+  const statusRadio = document.querySelector(`input[name="status"][value="${currentStatus}"]`);
+  if(statusRadio) statusRadio.checked = true;
+  document.getElementById('abTitle').value = book.title || '';
+  document.getElementById('abAuthor').value = book.author || '';
+  if([...abGenreSelect.options].some(o=>o.value===book.genre)) abGenreSelect.value = book.genre;
+  document.getElementById('abPages').value = book.pages || '';
+  document.getElementById('abPrice').value = book.price || '';
+  document.getElementById('abStart').value = book.start || '';
+  document.getElementById('abEnd').value = book.end || '';
+  document.getElementById('abRating').value = book.rating != null ? book.rating : 3;
   updateAbFieldsForStatus();
   addBookOverlay.classList.add('open');
 }
@@ -2270,11 +2449,21 @@ addBookForm.addEventListener('submit', async (e)=>{
 
   let no;
   if(abEditContext){
-    // converting an existing "읽는 중" book into 완독/중단 - keep its no, remove it from reading
+    // editing/converting an existing book - remove it from its original array first
     no = abEditContext.no;
-    const idx = reading.findIndex(r=>r.no===no);
-    if(idx>-1) reading.splice(idx,1);
-    await storageSet('allReading', reading);
+    if(abEditContext.sourceStatus === '읽는 중'){
+      const idx = reading.findIndex(r=>r.no===no);
+      if(idx>-1) reading.splice(idx,1);
+      await storageSet('allReading', reading);
+    } else if(abEditContext.sourceStatus === '완독'){
+      const idx = books.findIndex(b=>b.no===no);
+      if(idx>-1) books.splice(idx,1);
+      await storageSet('allBooks', books);
+    } else if(abEditContext.sourceStatus === '중단'){
+      const idx = dropped.findIndex(d=>d.no===no);
+      if(idx>-1) dropped.splice(idx,1);
+      await storageSet('allDropped', dropped);
+    }
   } else {
     const allNos = [...books.map(b=>b.no), ...dropped.map(d=>d.no), ...reading.map(r=>r.no), 0];
     no = Math.max(...allNos) + 1;
@@ -2474,6 +2663,40 @@ loadAndRenderApp();
   activateTab(initialId, { skipScrollTop: true });
 
   window.__activateTab = activateTab;
+
+  // ===== 좌우 스와이프로 탭 전환 =====
+  const panelOrder = Array.from(document.querySelectorAll('.tab-panel')).map(p=>p.id);
+  const SWIPE_MIN_X = 60;
+  const SWIPE_MAX_Y = 80;
+  const SWIPE_EXEMPT_SELECTOR = '.wrap-carousel, .topnav, #abSearchResults, input, textarea, select, .cover-grid';
+  let touchStartX = 0, touchStartY = 0, touchStartTime = 0, touchExempt = false;
+  document.addEventListener('touchstart', (e)=>{
+    if(e.touches.length !== 1) return;
+    const t = e.touches[0];
+    touchStartX = t.clientX;
+    touchStartY = t.clientY;
+    touchStartTime = Date.now();
+    touchExempt = !!(e.target.closest && e.target.closest(SWIPE_EXEMPT_SELECTOR));
+  }, {passive:true});
+  document.addEventListener('touchend', (e)=>{
+    if(touchExempt) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - touchStartX;
+    const dy = t.clientY - touchStartY;
+    const dt = Date.now() - touchStartTime;
+    if(Math.abs(dx) < SWIPE_MIN_X || Math.abs(dy) > SWIPE_MAX_Y || dt > 800) return;
+    const activePanel = document.querySelector('.tab-panel.is-active');
+    const currentId = activePanel ? activePanel.id : 'home';
+    let idx = panelOrder.indexOf(currentId);
+    if(idx === -1) idx = 0;
+    let nextIdx = idx;
+    if(dx < 0 && idx < panelOrder.length - 1) nextIdx = idx + 1; // 왼쪽으로 스와이프 -> 다음 탭
+    else if(dx > 0 && idx > 0) nextIdx = idx - 1; // 오른쪽으로 스와이프 -> 이전 탭
+    if(nextIdx !== idx){
+      activateTab(panelOrder[nextIdx]);
+      history.replaceState(null, '', '#' + panelOrder[nextIdx]);
+    }
+  }, {passive:true});
 })();
 </script>
 </body>
