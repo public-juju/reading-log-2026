@@ -59,6 +59,12 @@ section{scroll-margin-top:60px;}
 }
 .topnav a:hover{background:var(--bg); color:var(--ink);}
 .topnav a b{font-weight:800; margin-right:3px; color:var(--gray-2);}
+.topnav a.active{background:var(--ink); color:#fff;}
+.topnav a.active b{color:rgba(255,255,255,.75);}
+
+.tab-panel{display:none;}
+.tab-panel.is-active{display:block; animation:tabFadeIn .18s ease;}
+@keyframes tabFadeIn{from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:translateY(0);}}
 
 .fab-add{
   position:fixed; right:20px; bottom:24px; z-index:300;
@@ -514,10 +520,11 @@ footer{padding:40px 0 60px; border-top:1px solid var(--line); font-size:12px; co
 .data-toolbar-hint{font-size:12px; color:var(--gray-1); flex-basis:100%;}
 
 @media print{
-  .data-toolbar, .sort-bar, .quote-form, #importFile, .quote-actions, .fab-add{ display:none !important; }
+  .data-toolbar, .sort-bar, .quote-form, #importFile, .quote-actions, .fab-add, .topnav{ display:none !important; }
   body{background:#fff;}
   section{margin:28px 0; break-inside:avoid;}
   .cover-grid, .quote-grid{ break-inside:avoid; }
+  .tab-panel{display:block !important;}
 }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -525,6 +532,7 @@ footer{padding:40px 0 60px; border-top:1px solid var(--line); font-size:12px; co
 <body>
 <nav class="topnav">
   <div class="topnav-inner">
+    <a href="#home" class="active"><b>00</b>홈</a>
     <a href="#genre"><b>01</b>장르</a>
     <a href="#shelf"><b>02</b>서가</a>
     <a href="#covers"><b>03</b>책장</a>
@@ -538,6 +546,8 @@ footer{padding:40px 0 60px; border-top:1px solid var(--line); font-size:12px; co
 </nav>
 <button id="openAddBookBtn" class="fab-add">+ 책 추가</button>
 <div class="wrap">
+
+  <section id="home" class="tab-panel is-active">
 
   <div class="hero">
     <div class="eyebrow">READING LOG · 2026</div>
@@ -572,7 +582,9 @@ footer{padding:40px 0 60px; border-top:1px solid var(--line); font-size:12px; co
     <div class="stat-card"><div class="label">최저 평점</div><div class="value" id="statLowRated">–</div><div class="sub">완독은 했지만 아쉬웠던 책</div></div>
   </div>
 
-  <section id="genre">
+  </section>
+
+  <section id="genre" class="tab-panel">
     <div class="section-head">
       <span class="idx">01</span>
       <div><h2>장르 분포</h2><p class="desc">완독 <span id="genreDescCount">–</span>권 기준 비중이에요.</p></div>
@@ -583,7 +595,7 @@ footer{padding:40px 0 60px; border-top:1px solid var(--line); font-size:12px; co
     </div>
   </section>
 
-  <section id="shelf">
+  <section id="shelf" class="tab-panel">
     <div class="section-head">
       <span class="idx">02</span>
       <div>
@@ -601,7 +613,7 @@ footer{padding:40px 0 60px; border-top:1px solid var(--line); font-size:12px; co
     <div class="legend" id="legend"></div>
   </section>
 
-  <section id="covers">
+  <section id="covers" class="tab-panel">
     <div class="section-head">
       <span class="idx">03</span>
       <div>
@@ -627,7 +639,7 @@ footer{padding:40px 0 60px; border-top:1px solid var(--line); font-size:12px; co
     <div class="cover-grid" id="coverGrid"></div>
   </section>
 
-  <section id="timeline">
+  <section id="timeline" class="tab-panel">
     <div class="section-head">
       <span class="idx">04</span>
       <div>
@@ -661,7 +673,7 @@ footer{padding:40px 0 60px; border-top:1px solid var(--line); font-size:12px; co
     </div>
   </section>
 
-  <section id="ratings">
+  <section id="ratings" class="tab-panel">
     <div class="section-head">
       <span class="idx">05</span>
       <div><h2>별점 & 요일 패턴</h2><p class="desc">몇 점을 자주 줬는지, 어떤 요일에 책을 자주 펼쳤는지예요.</p></div>
@@ -672,7 +684,7 @@ footer{padding:40px 0 60px; border-top:1px solid var(--line); font-size:12px; co
     </div>
   </section>
 
-  <section id="savings">
+  <section id="savings" class="tab-panel">
     <div class="section-head">
       <span class="idx">06</span>
       <div><h2>독서적금</h2><p class="desc">완독할 때마다 책값만큼 적립 · 이자는 제외하고 책값만 반영했어요.</p></div>
@@ -688,7 +700,7 @@ footer{padding:40px 0 60px; border-top:1px solid var(--line); font-size:12px; co
     </div>
   </section>
 
-  <section id="dropped">
+  <section id="dropped" class="tab-panel">
     <div class="section-head">
       <span class="idx">07</span>
       <div><h2>중단한 책 4권</h2><p class="desc">완독하지 못하고 덮어둔 책들. 중단한 이유를 적어두면 나중에 다시 볼 때 도움이 될 거예요.</p></div>
@@ -696,7 +708,7 @@ footer{padding:40px 0 60px; border-top:1px solid var(--line); font-size:12px; co
     <div class="dropped-list" id="droppedList"></div>
   </section>
 
-  <section id="quotes">
+  <section id="quotes" class="tab-panel">
     <div class="section-head">
       <span class="idx">08</span>
       <div><h2>인상 깊은 문장</h2><p class="desc">마음에 남은 문장을 책 페이지처럼 기록해두세요. 책마다 접었다 펼 수 있어요.</p></div>
@@ -715,7 +727,7 @@ footer{padding:40px 0 60px; border-top:1px solid var(--line); font-size:12px; co
     <div class="quote-groups-wrap" id="quoteGrid"></div>
   </section>
 
-  <section id="insight">
+  <section id="insight" class="tab-panel">
     <div class="section-head">
       <span class="idx">09</span>
       <div>
@@ -1044,7 +1056,7 @@ const genreOrder = Object.keys(genreCounts).sort((a,b)=> genreCounts[b]-genreCou
   const totalForCovers = books.length + dropped.length;
   const coversCount = [...books, ...dropped].filter(b=>b.cover).length;
   document.getElementById('coverDescText').textContent = coversCount >= totalForCovers && totalForCovers > 0
-    ? `완독 ${totalBooks}권 + 중단 ${dropped.length}권 모두 실제 표지 이미지로 보여드려요.`
+    ? `2026년 읽은 책을 확인해보세요.`
     : `완독 ${totalBooks}권 + 중단 ${dropped.length}권 중 표지 이미지가 있는 ${coversCount}권은 실제 표지로, 나머지는 장르 컬러 카드로 보여드려요.`;
 
   // top genre
@@ -2422,6 +2434,46 @@ document.getElementById('qcDownloadBtn').addEventListener('click', ()=>{
 });
 
 loadAndRenderApp();
+
+// ===== 탭 네비게이션 =====
+(function initTabs(){
+  const tabLinks = Array.from(document.querySelectorAll('.topnav a'));
+  const panels = Array.from(document.querySelectorAll('.tab-panel'));
+  const scrollWrap = document.querySelector('.topnav');
+
+  function activateTab(id, opts){
+    opts = opts || {};
+    const target = document.getElementById(id);
+    if(!target || !target.classList.contains('tab-panel')) id = 'home';
+    panels.forEach(p => p.classList.toggle('is-active', p.id === id));
+    tabLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + id));
+    if(!opts.skipScrollTop){
+      window.scrollTo({ top: 0, behavior: 'auto' });
+    }
+    const activeLink = tabLinks.find(a => a.getAttribute('href') === '#' + id);
+    if(activeLink && scrollWrap){
+      const linkRect = activeLink.getBoundingClientRect();
+      const wrapRect = scrollWrap.getBoundingClientRect();
+      if(linkRect.left < wrapRect.left || linkRect.right > wrapRect.right){
+        activeLink.scrollIntoView({ inline: 'center', behavior: 'smooth', block: 'nearest' });
+      }
+    }
+  }
+
+  tabLinks.forEach(a => {
+    a.addEventListener('click', (e) => {
+      e.preventDefault();
+      const id = a.getAttribute('href').slice(1);
+      activateTab(id);
+      history.replaceState(null, '', '#' + id);
+    });
+  });
+
+  const initialId = (location.hash ? location.hash.slice(1) : 'home');
+  activateTab(initialId, { skipScrollTop: true });
+
+  window.__activateTab = activateTab;
+})();
 </script>
 </body>
 </html>
