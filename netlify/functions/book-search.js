@@ -98,13 +98,22 @@ exports.handler = async function (event) {
       let coverDataUri = null;
       if (item.cover) {
         try {
-          const coverRes = await fetch(item.cover);
-          const arrayBuf = await coverRes.arrayBuffer();
-          const buf = Buffer.from(arrayBuf);
-          const contentType = coverRes.headers.get("content-type") || "image/jpeg";
-          coverDataUri = `data:${contentType};base64,${buf.toString("base64")}`;
+          const coverRes = await fetch(item.cover, {
+            headers: {
+              "Referer": "https://www.aladin.co.kr/",
+              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36",
+            },
+          });
+          if (coverRes.ok) {
+            const arrayBuf = await coverRes.arrayBuffer();
+            const buf = Buffer.from(arrayBuf);
+            const contentType = coverRes.headers.get("content-type") || "image/jpeg";
+            coverDataUri = `data:${contentType};base64,${buf.toString("base64")}`;
+          } else {
+            coverDataUri = item.cover; // fall back to hotlinked URL if conversion fails
+          }
         } catch (e) {
-          coverDataUri = null; // frontend falls back to a genre-color card
+          coverDataUri = item.cover; // fall back to hotlinked URL if fetch throws
         }
       }
 
