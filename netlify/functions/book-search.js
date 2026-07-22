@@ -130,6 +130,7 @@ exports.handler = async function (event) {
           pubDate: item.pubDate || "",
           priceStandard: item.priceStandard || null,
           categoryName: item.categoryName || "",
+          description: item.description || "",
           pages,
           cover: coverDataUri,
         }),
