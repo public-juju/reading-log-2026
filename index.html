@@ -1041,8 +1041,11 @@ const genreOrder = Object.keys(genreCounts).sort((a,b)=> genreCounts[b]-genreCou
   document.getElementById('heroDesc').textContent = `올해 완독한 ${totalBooks}권과 중단한 ${dropped.length}권, 실제 독서 기간·별점·적립까지 모두 모아 서가로 세웠어요.`;
   document.getElementById('genreDescCount').textContent = totalBooks;
   document.getElementById('shelfCaptionCount').textContent = `완독 ${totalBooks}권 + 중단 ${dropped.length}권 · 최근 읽은 순`;
+  const totalForCovers = books.length + dropped.length;
   const coversCount = [...books, ...dropped].filter(b=>b.cover).length;
-  document.getElementById('coverDescText').textContent = `완독 ${totalBooks}권 + 중단 ${dropped.length}권 중 표지 이미지가 있는 ${coversCount}권은 실제 표지로, 나머지는 장르 컬러 카드로 보여드려요.`;
+  document.getElementById('coverDescText').textContent = coversCount >= totalForCovers && totalForCovers > 0
+    ? `완독 ${totalBooks}권 + 중단 ${dropped.length}권 모두 실제 표지 이미지로 보여드려요.`
+    : `완독 ${totalBooks}권 + 중단 ${dropped.length}권 중 표지 이미지가 있는 ${coversCount}권은 실제 표지로, 나머지는 장르 컬러 카드로 보여드려요.`;
 
   // top genre
   const topGenre = genreOrder[0] || '–';
@@ -2180,6 +2183,7 @@ let abEditContext = null; // { no } when converting an existing "읽는 중" boo
 function openConvertModal(readingBook, targetStatus){
   populateGenreSelect();
   resetAbSearch();
+  abSelectedCover = readingBook.cover || null;
   abEditContext = { no: readingBook.no };
   document.getElementById('addBookModalTitle').textContent =
     targetStatus === '완독' ? '완독으로 표시하기' : '중단으로 표시하기';
