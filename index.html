@@ -1995,7 +1995,7 @@ document.getElementById('abSearchBtn').addEventListener('click', async ()=>{
   const resultsEl = document.getElementById('abSearchResults');
   resultsEl.innerHTML = '<div class="ab-search-loading">검색 중...</div>';
   try{
-    const res = await fetch(`/.netlify/functions/book-search?action=search&query=${encodeURIComponent(q)}`);
+    const res = await fetch(`/api/book-search?action=search&query=${encodeURIComponent(q)}`);
     const data = await res.json();
     if(data.error){
       resultsEl.innerHTML = `<div class="ab-search-empty">검색에 실패했어요: ${data.error}</div>`;
@@ -2028,7 +2028,7 @@ async function selectAbSearchResult(itemId){
   const resultsEl = document.getElementById('abSearchResults');
   resultsEl.innerHTML = '<div class="ab-search-loading">불러오는 중...</div>';
   try{
-    const res = await fetch(`/.netlify/functions/book-search?action=detail&itemId=${encodeURIComponent(itemId)}`);
+    const res = await fetch(`/api/book-search?action=detail&itemId=${encodeURIComponent(itemId)}`);
     const d = await res.json();
     if(d.error){
       resultsEl.innerHTML = `<div class="ab-search-empty">불러오기에 실패했어요: ${d.error}</div>`;
