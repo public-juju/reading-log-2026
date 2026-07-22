@@ -262,6 +262,22 @@ section{margin:80px 0;}
 .month-bar:hover{filter:brightness(1.15);}
 .month-label{font-size:11px; color:var(--gray-1); font-weight:600; margin-top:8px;}
 
+/* SAVINGS TABLE */
+.savings-table-wrap{margin-top:24px; border:1px solid var(--line); overflow-x:auto;}
+.savings-table{width:100%; border-collapse:collapse; font-size:13px;}
+.savings-table th, .savings-table td{padding:10px 14px; text-align:left; white-space:nowrap;}
+.savings-table thead th{
+  font-size:11.5px; font-weight:700; color:var(--gray-1); background:var(--bg);
+  border-bottom:1px solid var(--line); position:sticky; top:0;
+}
+.savings-table tbody tr{border-bottom:1px solid var(--line);}
+.savings-table tbody tr:last-child{border-bottom:none;}
+.savings-table tbody tr:hover{background:var(--bg);}
+.savings-table td:first-child{color:var(--gray-1); font-weight:600; width:44px;}
+.savings-table td:nth-child(2){font-weight:700; color:var(--ink); white-space:normal; min-width:160px;}
+.savings-table td:nth-child(3), .savings-table td:nth-child(4){text-align:right; font-variant-numeric:tabular-nums;}
+.savings-table td:nth-child(4){font-weight:700;}
+
 /* DROPPED LIST */
 .dropped-list{display:flex; flex-direction:column; gap:14px;}
 .dropped-card{background:var(--paper); border:1px dashed var(--line); padding:16px 18px;}
@@ -735,6 +751,14 @@ footer{padding:40px 0 60px; border-top:1px solid var(--line); font-size:12px; co
     </div>
     <div class="savings-chart-wrap">
       <svg id="savingsChart" viewBox="0 0 1000 260" preserveAspectRatio="none" style="width:100%; height:260px; display:block; background:var(--paper); border:1px solid var(--line);"></svg>
+    </div>
+    <div class="savings-table-wrap">
+      <table class="savings-table">
+        <thead>
+          <tr><th>No.</th><th>책 제목</th><th>가격</th><th>누적금액</th></tr>
+        </thead>
+        <tbody id="savingsTableBody"></tbody>
+      </table>
     </div>
   </section>
 
@@ -1789,6 +1813,16 @@ points.forEach(p=>{
   label.textContent = m;
   savingsChart.appendChild(label);
 });
+
+const savingsTableBody = document.getElementById('savingsTableBody');
+savingsTableBody.innerHTML = points.map((p, i)=>`
+  <tr>
+    <td>${i+1}</td>
+    <td>${p.title}</td>
+    <td>${p.price.toLocaleString()}원</td>
+    <td>${p.total.toLocaleString()}원</td>
+  </tr>
+`).join('');
 
 /* ---------------- dropped list with memo (view/edit toggle) ---------------- */
 const droppedListEl = document.getElementById('droppedList');
