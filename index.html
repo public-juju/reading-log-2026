@@ -2067,33 +2067,6 @@ document.getElementById('quoteAddBtn').addEventListener('click', async ()=>{
 });
 renderQuotes();
 
-/* ---------------- wishlist (읽고 싶은 책) ---------------- */
-const wishlistListEl = document.getElementById('wishlistList');
-const wishlistEmptyEl = document.getElementById('wishlistEmpty');
-
-function renderWishlist(){
-  wishlistListEl.innerHTML = '';
-  wishlistEmptyEl.style.display = wishlist.length ? 'none' : 'block';
-  wishlist.slice().reverse().forEach(w=>{
-    const card = document.createElement('div');
-    card.className = 'wishlist-card';
-    const metaParts = [w.author, w.genre].filter(Boolean);
-    card.innerHTML = `
-      <button class="wishlist-delete" data-id="${w.id}" type="button">삭제</button>
-      ${w.cover ? `<div class="wishlist-cover"><img src="${w.cover}" alt=""></div>` : ''}
-      <div class="name">${w.title}${metaParts.length ? `<span>${metaParts.join(' · ')}</span>` : ''}</div>
-    `;
-    wishlistListEl.appendChild(card);
-  });
-  wishlistListEl.querySelectorAll('.wishlist-delete').forEach(btn=>{
-    btn.addEventListener('click', async ()=>{
-      wishlist = wishlist.filter(w=>String(w.id) !== String(btn.dataset.id));
-      await storageSet('allWishlist', wishlist);
-      renderWishlist();
-    });
-  });
-}
-
 /* ---------------- export / import / print ---------------- */
 document.getElementById('exportBtn').addEventListener('click', async ()=>{
   const data = {};
@@ -2258,6 +2231,33 @@ window.addEventListener('beforeprint', ()=>{
   });
 })();
 } // end renderApp
+
+/* ---------------- wishlist (읽고 싶은 책) ---------------- */
+const wishlistListEl = document.getElementById('wishlistList');
+const wishlistEmptyEl = document.getElementById('wishlistEmpty');
+
+function renderWishlist(){
+  wishlistListEl.innerHTML = '';
+  wishlistEmptyEl.style.display = wishlist.length ? 'none' : 'block';
+  wishlist.slice().reverse().forEach(w=>{
+    const card = document.createElement('div');
+    card.className = 'wishlist-card';
+    const metaParts = [w.author, w.genre].filter(Boolean);
+    card.innerHTML = `
+      <button class="wishlist-delete" data-id="${w.id}" type="button">삭제</button>
+      ${w.cover ? `<div class="wishlist-cover"><img src="${w.cover}" alt=""></div>` : ''}
+      <div class="name">${w.title}${metaParts.length ? `<span>${metaParts.join(' · ')}</span>` : ''}</div>
+    `;
+    wishlistListEl.appendChild(card);
+  });
+  wishlistListEl.querySelectorAll('.wishlist-delete').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      wishlist = wishlist.filter(w=>String(w.id) !== String(btn.dataset.id));
+      await storageSet('allWishlist', wishlist);
+      renderWishlist();
+    });
+  });
+}
 
 async function ensureGenreColors(){
   const customColors = (await storageGet('customGenreColors')) || {};
@@ -2432,6 +2432,7 @@ function updateAbFieldsForStatus(){
   const pagesInput = document.getElementById('abPages');
   const startInput = document.getElementById('abStart');
   const endInput = document.getElementById('abEnd');
+  const authorInput = document.getElementById('abAuthor');
   abRatingWrap.style.display = status === '완독' ? 'block' : 'none';
   if(status === '읽고싶음'){
     pagesWrap.style.display = 'none';
@@ -2440,12 +2441,14 @@ function updateAbFieldsForStatus(){
     pagesInput.required = false;
     startInput.required = false;
     endInput.required = false;
+    authorInput.required = false;
     return;
   }
   pagesWrap.style.display = 'block';
   startWrap.style.display = 'block';
   pagesInput.required = true;
   startInput.required = true;
+  authorInput.required = true;
   if(status === '읽는 중'){
     endWrap.style.display = 'none';
     endInput.required = false;
