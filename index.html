@@ -302,7 +302,9 @@ section{margin:80px 0;}
 .wishlist-empty{color:var(--gray-1); font-size:14px; padding:20px 0;}
 .wishlist-list{display:flex; flex-direction:column; gap:14px;}
 .wishlist-card{background:var(--paper); border:1px dashed var(--line); padding:16px 18px; position:relative;}
-.wishlist-card .name{font-size:16px; font-weight:700;}
+.wishlist-cover{width:52px; height:74px; overflow:hidden; float:left; margin-right:14px; background:var(--bg); border:1px solid var(--line);}
+.wishlist-cover img{width:100%; height:100%; object-fit:cover; display:block;}
+.wishlist-card .name{font-size:16px; font-weight:700; overflow:hidden;}
 .wishlist-card .name span{display:block; font-size:12.5px; font-weight:400; color:var(--gray-1); margin-top:4px;}
 .wishlist-card .memo{font-size:13px; color:var(--ink-soft); margin-top:10px; white-space:pre-wrap; line-height:1.5;}
 .wishlist-delete{position:absolute; top:14px; right:16px; background:none; border:none; color:var(--gray-1); font-size:13px; font-weight:700; cursor:pointer; padding:4px 8px; border-radius:4px;}
@@ -448,7 +450,7 @@ footer{padding:40px 0 60px; border-top:1px solid var(--line); font-size:12px; co
   width:100%; font-family:'Pretendard',sans-serif; font-size:14px; padding:9px 10px;
   border:1px solid var(--line); border-radius:6px; background:var(--paper); color:var(--ink);
 }
-.addbook-status{display:flex; gap:8px;}
+.addbook-status{display:flex; gap:8px; flex-wrap:wrap;}
 .addbook-status label{
   flex:1; text-align:center; border:1px solid var(--line); border-radius:6px; padding:9px; cursor:pointer;
   font-size:13px; font-weight:700; color:var(--gray-1); margin-bottom:0;
@@ -598,13 +600,13 @@ footer{padding:40px 0 60px; border-top:1px solid var(--line); font-size:12px; co
     <a href="#genre"><b>01</b>장르</a>
     <a href="#shelf"><b>02</b>서가</a>
     <a href="#covers"><b>03</b>책장</a>
-    <a href="#timeline"><b>04</b>타임라인</a>
-    <a href="#ratings"><b>05</b>별점&요일</a>
-    <a href="#savings"><b>06</b>적금</a>
-    <a href="#dropped"><b>07</b>중단</a>
-    <a href="#quotes"><b>08</b>문장</a>
-    <a href="#insight"><b>09</b>인사이트</a>
-    <a href="#wishlist"><b>10</b>읽고싶은 책</a>
+    <a href="#wishlist"><b>04</b>읽고싶은 책</a>
+    <a href="#timeline"><b>05</b>타임라인</a>
+    <a href="#ratings"><b>06</b>별점&요일</a>
+    <a href="#savings"><b>07</b>적금</a>
+    <a href="#dropped"><b>08</b>중단</a>
+    <a href="#quotes"><b>09</b>문장</a>
+    <a href="#insight"><b>10</b>인사이트</a>
   </div>
 </nav>
 <button id="openAddBookBtn" class="fab-add">+ 책 추가</button>
@@ -702,9 +704,18 @@ footer{padding:40px 0 60px; border-top:1px solid var(--line); font-size:12px; co
     <div class="cover-grid" id="coverGrid"></div>
   </section>
 
-  <section id="timeline" class="tab-panel">
+  <section id="wishlist" class="tab-panel">
     <div class="section-head">
       <span class="idx">04</span>
+      <div><h2>읽고 싶은 책</h2><p class="desc">언젠가 읽고 싶은 책을 목록으로 모아두세요. 오른쪽 위 "+ 책 추가" 버튼에서 상태를 "읽고 싶음"으로 선택해 추가할 수 있어요.</p></div>
+    </div>
+    <div class="wishlist-empty" id="wishlistEmpty" style="display:none;">아직 담아둔 책이 없어요. 오른쪽 위 "+ 책 추가" 버튼에서 "읽고 싶음"을 선택해 추가해보세요.</div>
+    <div class="wishlist-list" id="wishlistList"></div>
+  </section>
+
+  <section id="timeline" class="tab-panel">
+    <div class="section-head">
+      <span class="idx">05</span>
       <div>
         <h2>완독 타임라인</h2>
         <p class="desc">1월부터 7월까지, 실제로 책을 붙잡고 있던 기간과 월별 완독 권수예요.</p>
@@ -738,7 +749,7 @@ footer{padding:40px 0 60px; border-top:1px solid var(--line); font-size:12px; co
 
   <section id="ratings" class="tab-panel">
     <div class="section-head">
-      <span class="idx">05</span>
+      <span class="idx">06</span>
       <div><h2>별점 & 요일 패턴</h2><p class="desc">몇 점을 자주 줬는지, 어떤 요일에 책을 자주 펼쳤는지예요.</p></div>
     </div>
     <div class="split-two">
@@ -749,7 +760,7 @@ footer{padding:40px 0 60px; border-top:1px solid var(--line); font-size:12px; co
 
   <section id="savings" class="tab-panel">
     <div class="section-head">
-      <span class="idx">06</span>
+      <span class="idx">07</span>
       <div><h2>독서적금</h2><p class="desc">완독할 때마다 책값만큼 적립 · 이자는 제외하고 책값만 반영했어요.</p></div>
     </div>
     <div class="stats" style="margin:0 0 28px;">
@@ -773,7 +784,7 @@ footer{padding:40px 0 60px; border-top:1px solid var(--line); font-size:12px; co
 
   <section id="dropped" class="tab-panel">
     <div class="section-head">
-      <span class="idx">07</span>
+      <span class="idx">08</span>
       <div><h2>중단한 책 4권</h2><p class="desc">완독하지 못하고 덮어둔 책들. 중단한 이유를 적어두면 나중에 다시 볼 때 도움이 될 거예요.</p></div>
     </div>
     <div class="dropped-list" id="droppedList"></div>
@@ -781,7 +792,7 @@ footer{padding:40px 0 60px; border-top:1px solid var(--line); font-size:12px; co
 
   <section id="quotes" class="tab-panel">
     <div class="section-head">
-      <span class="idx">08</span>
+      <span class="idx">09</span>
       <div><h2>인상 깊은 문장</h2><p class="desc">마음에 남은 문장을 책 페이지처럼 기록해두세요. 책마다 접었다 펼 수 있어요.</p></div>
     </div>
     <div class="quote-form">
@@ -800,7 +811,7 @@ footer{padding:40px 0 60px; border-top:1px solid var(--line); font-size:12px; co
 
   <section id="insight" class="tab-panel">
     <div class="section-head">
-      <span class="idx">09</span>
+      <span class="idx">10</span>
       <div>
         <h2>독서 인사이트 & 랩업</h2>
         <p class="desc">책 기록을 업데이트할 때마다 아래 내용도 함께 갱신돼요. 2026년이 끝나길 기다릴 필요 없어요.</p>
@@ -812,25 +823,6 @@ footer{padding:40px 0 60px; border-top:1px solid var(--line); font-size:12px; co
       <div class="wrap-carousel" id="wrapCarousel"></div>
       <div class="wrap-dots" id="wrapDots"></div>
     </div>
-  </section>
-
-  <section id="wishlist" class="tab-panel">
-    <div class="section-head">
-      <span class="idx">10</span>
-      <div><h2>읽고 싶은 책</h2><p class="desc">언젠가 읽고 싶은 책을 목록으로 모아두세요.</p></div>
-    </div>
-    <form class="quote-form" id="wishlistForm">
-      <input type="text" id="wishTitle" placeholder="책 제목" required>
-      <div class="addbook-row">
-        <input type="text" id="wishAuthor" placeholder="저자 (선택)">
-        <input type="text" id="wishGenre" placeholder="장르 (선택)" list="wishGenreOptions">
-        <datalist id="wishGenreOptions"></datalist>
-      </div>
-      <textarea id="wishMemo" placeholder="왜 읽고 싶은지, 어디서 알게 됐는지 등 메모 (선택)"></textarea>
-      <button type="submit">목록에 추가하기</button>
-    </form>
-    <div class="wishlist-empty" id="wishlistEmpty" style="display:none;">아직 담아둔 책이 없어요. 위에서 추가해보세요.</div>
-    <div class="wishlist-list" id="wishlistList"></div>
   </section>
 
   <footer>2026 독서 결산 · 페이지·별점·기간·가격은 독서 기록 앱의 실제 데이터를 기반으로 했고, 표지는 직접 올려주신 원본 이미지를 사용했어요. 형식 태그·중단 사유·인상 깊은 문장은 이 화면 안에 저장돼요.</footer>
@@ -869,6 +861,7 @@ footer{padding:40px 0 60px; border-top:1px solid var(--line); font-size:12px; co
         <label><input type="radio" name="status" value="완독" checked><span>완독</span></label>
         <label><input type="radio" name="status" value="읽는 중"><span>읽는 중</span></label>
         <label><input type="radio" name="status" value="중단"><span>중단</span></label>
+        <label><input type="radio" name="status" value="읽고싶음"><span>읽고 싶음</span></label>
       </div>
       <div>
         <label for="abTitle">제목</label>
@@ -888,7 +881,7 @@ footer{padding:40px 0 60px; border-top:1px solid var(--line); font-size:12px; co
       </div>
       <input type="text" id="abGenreNew" class="addbook-newgenre" placeholder="새 장르 이름" style="display:none;">
       <div class="addbook-row">
-        <div>
+        <div id="abPagesWrap">
           <label for="abPages">페이지</label>
           <input type="number" id="abPages" min="1" required>
         </div>
@@ -898,7 +891,7 @@ footer{padding:40px 0 60px; border-top:1px solid var(--line); font-size:12px; co
         </div>
       </div>
       <div class="addbook-row">
-        <div>
+        <div id="abStartWrap">
           <label for="abStart">시작일</label>
           <input type="date" id="abStart" required>
         </div>
@@ -2077,19 +2070,8 @@ renderQuotes();
 /* ---------------- wishlist (읽고 싶은 책) ---------------- */
 const wishlistListEl = document.getElementById('wishlistList');
 const wishlistEmptyEl = document.getElementById('wishlistEmpty');
-const wishGenreOptions = document.getElementById('wishGenreOptions');
-
-function populateWishGenreOptions(){
-  wishGenreOptions.innerHTML = '';
-  Object.keys(genreColor).forEach(g=>{
-    const opt = document.createElement('option');
-    opt.value = g;
-    wishGenreOptions.appendChild(opt);
-  });
-}
 
 function renderWishlist(){
-  populateWishGenreOptions();
   wishlistListEl.innerHTML = '';
   wishlistEmptyEl.style.display = wishlist.length ? 'none' : 'block';
   wishlist.slice().reverse().forEach(w=>{
@@ -2098,8 +2080,8 @@ function renderWishlist(){
     const metaParts = [w.author, w.genre].filter(Boolean);
     card.innerHTML = `
       <button class="wishlist-delete" data-id="${w.id}" type="button">삭제</button>
+      ${w.cover ? `<div class="wishlist-cover"><img src="${w.cover}" alt=""></div>` : ''}
       <div class="name">${w.title}${metaParts.length ? `<span>${metaParts.join(' · ')}</span>` : ''}</div>
-      ${w.memo ? `<div class="memo">${w.memo}</div>` : ''}
     `;
     wishlistListEl.appendChild(card);
   });
@@ -2111,22 +2093,6 @@ function renderWishlist(){
     });
   });
 }
-
-document.getElementById('wishlistForm').addEventListener('submit', async (e)=>{
-  e.preventDefault();
-  const title = document.getElementById('wishTitle').value.trim();
-  if(!title) return;
-  const author = document.getElementById('wishAuthor').value.trim();
-  const genre = document.getElementById('wishGenre').value.trim();
-  const memo = document.getElementById('wishMemo').value.trim();
-  wishlist.push({ id: Date.now(), title, author, genre, memo });
-  await storageSet('allWishlist', wishlist);
-  if(genre && !genreColor[genre]){
-    await ensureGenreColors();
-  }
-  e.target.reset();
-  renderWishlist();
-});
 
 /* ---------------- export / import / print ---------------- */
 document.getElementById('exportBtn').addEventListener('click', async ()=>{
@@ -2460,9 +2426,26 @@ abGenreSelect.addEventListener('change', ()=>{
 });
 function updateAbFieldsForStatus(){
   const status = document.querySelector('input[name="status"]:checked').value;
-  abRatingWrap.style.display = status === '완독' ? 'block' : 'none';
+  const pagesWrap = document.getElementById('abPagesWrap');
+  const startWrap = document.getElementById('abStartWrap');
   const endWrap = document.getElementById('abEndWrap');
+  const pagesInput = document.getElementById('abPages');
+  const startInput = document.getElementById('abStart');
   const endInput = document.getElementById('abEnd');
+  abRatingWrap.style.display = status === '완독' ? 'block' : 'none';
+  if(status === '읽고싶음'){
+    pagesWrap.style.display = 'none';
+    startWrap.style.display = 'none';
+    endWrap.style.display = 'none';
+    pagesInput.required = false;
+    startInput.required = false;
+    endInput.required = false;
+    return;
+  }
+  pagesWrap.style.display = 'block';
+  startWrap.style.display = 'block';
+  pagesInput.required = true;
+  startInput.required = true;
   if(status === '읽는 중'){
     endWrap.style.display = 'none';
     endInput.required = false;
@@ -2543,6 +2526,29 @@ addBookForm.addEventListener('submit', async (e)=>{
   const end = document.getElementById('abEnd').value;
   const rating = status === '완독' ? parseFloat(document.getElementById('abRating').value) : null;
   const coverFile = document.getElementById('abCover').files[0];
+
+  if(status === '읽고싶음'){
+    if(!title){
+      alert('제목은 꼭 입력해주세요.');
+      return;
+    }
+    let wCover = await fileToDataUri(coverFile);
+    if(!wCover && abSelectedCover) wCover = abSelectedCover;
+    if(genre && !genreColor[genre]){
+      const customColors = (await storageGet('customGenreColors')) || {};
+      const idx = Object.keys(customColors).length;
+      const color = RESERVED_GENRE_COLORS[idx % RESERVED_GENRE_COLORS.length];
+      customColors[genre] = color;
+      genreColor[genre] = color;
+      await storageSet('customGenreColors', customColors);
+    }
+    wishlist.push({ id: Date.now(), title, author, genre, price: price || null, cover: wCover || null });
+    await storageSet('allWishlist', wishlist);
+    addBookForm.reset();
+    addBookOverlay.classList.remove('open');
+    renderWishlist();
+    return;
+  }
 
   if(status === '읽는 중'){
     if(!title || !author || !pages || !start){
