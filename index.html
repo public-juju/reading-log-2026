@@ -2,6 +2,12 @@
 <!-- redeploy trigger: tab nav -->
 <html lang="ko">
 <head>
+<script>
+try{
+  var _rlTheme = JSON.parse(localStorage.getItem('rlog2026:themeMode') || 'null');
+  if(_rlTheme === 'dark') document.documentElement.classList.add('dark-mode');
+}catch(e){}
+</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -153,6 +159,11 @@ section{margin:80px 0;}
 .fs-hint{flex-basis:100%; font-size:11.5px; color:var(--gray-1); padding:10px 14px; border-top:1px solid var(--line); background:var(--bg);}
 
 .sort-bar{display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:24px;}
+.book-search-input{
+  font-family:'Pretendard',sans-serif; font-size:13px; padding:8px 14px;
+  border:1px solid var(--line); border-radius:20px; background:var(--paper); color:var(--ink);
+  flex:1; min-width:160px;
+}
 .sort-bar select{font-family:'Pretendard',sans-serif; font-size:13px; font-weight:600; padding:8px 12px; border:1px solid var(--line); background:var(--paper); color:var(--ink); border-radius:4px;}
 .sort-dir-btn{font-family:'Pretendard',sans-serif; font-size:13px; font-weight:700; padding:8px 14px; border:1px solid var(--line); background:var(--paper); color:var(--ink); border-radius:4px; cursor:pointer;}
 .sort-dir-btn:hover{background:var(--bg);}
@@ -308,6 +319,12 @@ section{margin:80px 0;}
 .wishlist-card .name span{display:block; font-size:12.5px; font-weight:400; color:var(--gray-1); margin-top:4px;}
 .wishlist-card .memo{font-size:13px; color:var(--ink-soft); margin-top:10px; white-space:pre-wrap; line-height:1.5;}
 .wishlist-delete{position:absolute; top:14px; right:16px; background:none; border:none; color:var(--gray-1); font-size:13px; font-weight:700; cursor:pointer; padding:4px 8px; border-radius:4px;}
+.wishlist-convert-row{display:flex; gap:8px; margin-top:12px;}
+.wishlist-convert{
+  font-family:'Pretendard',sans-serif; font-size:12.5px; font-weight:700; padding:7px 12px;
+  border:1px solid var(--line); border-radius:20px; background:var(--paper); color:var(--ink-soft); cursor:pointer;
+}
+.wishlist-convert:hover{background:var(--bg); color:var(--ink);}
 .wishlist-delete:hover{background:#FBEBEA; color:#B3403C;}
 .quote-groups-wrap{display:flex; flex-direction:column; gap:14px;}
 .quote-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(240px,1fr)); gap:20px;}
@@ -425,9 +442,32 @@ footer{padding:40px 0 60px; border-top:1px solid var(--line); font-size:12px; co
 .synopsis-title{font-size:17px; font-weight:800; text-align:center; letter-spacing:-0.01em;}
 .synopsis-author{font-size:13px; color:var(--gray-1); text-align:center; margin-top:4px; font-weight:600;}
 .synopsis-text{font-size:14px; line-height:1.7; color:var(--ink-soft); margin-top:18px;}
+.synopsis-review{font-size:14px; line-height:1.6; color:var(--ink); margin-top:14px; padding:12px 14px; background:var(--bg); border-left:3px solid var(--accent-rose); border-radius:4px; font-style:italic;}
 .synopsis-source{font-size:11px; color:var(--gray-2); margin-top:16px; text-align:right;}
 .synopsis-btn-row{display:flex; gap:8px; margin-top:16px;}
 .synopsis-btn-row .synopsis-edit, .synopsis-btn-row .synopsis-delete{margin-top:0; flex:1;}
+.synopsis-share{
+  width:100%; margin-top:10px; font-family:'Pretendard',sans-serif; font-size:13px; font-weight:700;
+  background:var(--paper); color:var(--ink); border:1px solid var(--line); border-radius:6px; padding:11px; cursor:pointer;
+}
+.synopsis-share:hover{background:var(--bg);}
+.share-card-offscreen{ position:fixed; left:-9999px; top:0; pointer-events:none; }
+.share-card{
+  width:400px; padding:40px 32px; background:#FDFCF9; color:#1B1B1A;
+  font-family:'Pretendard',sans-serif; display:flex; flex-direction:column; gap:14px; align-items:center;
+}
+.share-card-cover{ width:160px; height:232px; border-radius:6px; overflow:hidden; box-shadow:0 12px 30px rgba(0,0,0,.2); background:#EDEDEA; }
+.share-card-cover img{ width:100%; height:100%; object-fit:cover; display:block; }
+.share-card-genre{ font-size:12px; font-weight:700; letter-spacing:.08em; color:#8B8B88; text-transform:uppercase; }
+.share-card-title{ text-align:center; font-size:22px; font-weight:800; line-height:1.35; }
+.share-card-author{ text-align:center; font-size:14px; color:#4E4E4C; }
+.share-card-rating{ text-align:center; font-size:16px; }
+.share-card-period{ text-align:center; font-size:12.5px; color:#8B8B88; }
+.share-card-review{
+  font-size:13.5px; font-style:italic; line-height:1.6; text-align:center; color:#4E4E4C;
+  border-top:1px solid #E6E7EB; padding-top:14px; margin-top:2px; width:100%;
+}
+.share-card-foot{ font-size:11px; color:#B8B6B1; letter-spacing:.1em; margin-top:6px; }
 .synopsis-edit{
   font-family:'Pretendard',sans-serif; font-size:12.5px; font-weight:700;
   padding:10px; border-radius:6px; border:1px solid var(--line); background:none; color:var(--ink-soft); cursor:pointer;
@@ -589,7 +629,49 @@ footer{padding:40px 0 60px; border-top:1px solid var(--line); font-size:12px; co
   section{margin:28px 0; break-inside:avoid;}
   .cover-grid, .quote-grid{ break-inside:avoid; }
   .tab-panel{display:block !important;}
+  html{
+    --bg:#FFFFFF; --paper:#FFFFFF; --ink:#1B1B1A; --ink-soft:#4E4E4C;
+    --gray-1:#8B8B88; --gray-2:#B8B6B1; --line:#E6E7EB;
+  }
 }
+
+/* ---------------- dark mode ---------------- */
+html.dark-mode{
+  --bg:#17181C;
+  --paper:#1E2024;
+  --ink:#EDEDEA;
+  --ink-soft:#C7C5C0;
+  --gray-1:#93918D;
+  --gray-2:#4A4A48;
+  --line:#33343A;
+}
+html.dark-mode .topnav{ background:rgba(23,24,28,.92); }
+html.dark-mode .synopsis-overlay{ background:rgba(0,0,0,.7); }
+html.dark-mode .topnav a.active,
+html.dark-mode .fab-add,
+html.dark-mode .fmt-chip.active,
+html.dark-mode .quote-form button,
+html.dark-mode .quote-edit-save,
+html.dark-mode .qc-btn.active,
+html.dark-mode .addbook-submit,
+html.dark-mode .reading-now-btn.primary,
+html.dark-mode .rnp-unit-btn.active,
+html.dark-mode .reading-now-quote-btn,
+html.dark-mode .ab-search-row button,
+html.dark-mode .theme-toggle-btn{
+  background:#EDEDEA; color:#17181C;
+}
+html.dark-mode .addbook-submit:hover,
+html.dark-mode .reading-now-quote-btn:hover,
+html.dark-mode .ab-search-row button:hover{ background:#fff; }
+html.dark-mode .synopsis-delete:hover{ background:#3A2222; }
+.theme-toggle-btn{
+  position:fixed; left:20px; bottom:24px; z-index:300;
+  font-family:'Pretendard',sans-serif; font-size:14px; font-weight:800;
+  background:var(--paper); color:var(--ink); border:1px solid var(--line); border-radius:30px;
+  padding:14px 16px; cursor:pointer; box-shadow:0 6px 18px rgba(0,0,0,.18);
+}
+@media print{ .theme-toggle-btn{ display:none !important; } }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
@@ -610,6 +692,7 @@ footer{padding:40px 0 60px; border-top:1px solid var(--line); font-size:12px; co
   </div>
 </nav>
 <button id="openAddBookBtn" class="fab-add">+ 책 추가</button>
+<button id="themeToggleBtn" class="theme-toggle-btn" type="button" title="다크 모드">🌙</button>
 <div class="wrap">
 
   <section id="home" class="tab-panel is-active">
@@ -623,6 +706,8 @@ footer{padding:40px 0 60px; border-top:1px solid var(--line); font-size:12px; co
       <div><b id="heroPages">–</b><span>페이지</span></div>
       <div><b id="heroSaved">–</b><span>원 적립</span></div>
       <div><b id="heroRating">–</b><span>평균 별점</span></div>
+      <div><b id="heroStreak">–</b><span>일 연속 독서 중</span></div>
+      <div><b id="heroLongestStreak">–</b><span>일 최장 스트릭</span></div>
     </div>
   </div>
 
@@ -658,6 +743,10 @@ footer{padding:40px 0 60px; border-top:1px solid var(--line); font-size:12px; co
       <svg id="genrePie" width="220" height="220" viewBox="0 0 220 220"></svg>
       <div class="genre-pie-legend" id="genreLegend"></div>
     </div>
+    <div style="margin-top:40px;">
+      <h4 class="split-h">가장 많이 읽은 작가</h4>
+      <div class="genre-list" id="authorStatList"></div>
+    </div>
   </section>
 
   <section id="shelf" class="tab-panel">
@@ -669,6 +758,7 @@ footer{padding:40px 0 60px; border-top:1px solid var(--line); font-size:12px; co
       </div>
     </div>
     <div class="shelf-wrap">
+      <input type="text" id="shelfSearchInput" placeholder="🔍 제목·저자 검색" class="book-search-input" style="margin-bottom:16px;">
       <div class="shelf-row" id="shelfRow"></div>
       <div class="shelf-caption">
         <span id="shelfCaptionCount">완독 – 권 + 중단 – 권 · 최근 읽은 순</span>
@@ -693,6 +783,7 @@ footer{padding:40px 0 60px; border-top:1px solid var(--line); font-size:12px; co
       <div class="fs-hint">칩을 눌러 매체를 바꾸면 여기 숫자도 바로 갱신돼요 (중복 선택 가능)</div>
     </div>
     <div class="sort-bar">
+      <input type="text" id="coverSearchInput" placeholder="🔍 제목·저자 검색" class="book-search-input">
       <select id="sortField">
         <option value="order">읽은 순서</option>
         <option value="author">작가</option>
@@ -835,11 +926,26 @@ footer{padding:40px 0 60px; border-top:1px solid var(--line); font-size:12px; co
     <div class="synopsis-title" id="synopsisTitle"></div>
     <div class="synopsis-author" id="synopsisAuthor"></div>
     <div class="synopsis-text" id="synopsisText"></div>
+    <div class="synopsis-review" id="synopsisReview" style="display:none;"></div>
     <div class="synopsis-source" id="synopsisSource"></div>
     <div class="synopsis-btn-row">
       <button class="synopsis-edit" id="synopsisEditBtn">수정하기</button>
       <button class="synopsis-delete" id="synopsisDeleteBtn">삭제하기</button>
     </div>
+    <button class="synopsis-share" id="synopsisShareBtn" style="display:none;">📸 완독 공유카드 만들기</button>
+  </div>
+</div>
+
+<div class="share-card-offscreen" id="shareCardOffscreen">
+  <div class="share-card" id="shareCardInner">
+    <div class="share-card-cover" id="shareCardCover"></div>
+    <div class="share-card-genre" id="shareCardGenre"></div>
+    <div class="share-card-title" id="shareCardTitle"></div>
+    <div class="share-card-author" id="shareCardAuthor"></div>
+    <div class="share-card-rating" id="shareCardRating"></div>
+    <div class="share-card-period" id="shareCardPeriod"></div>
+    <div class="share-card-review" id="shareCardReview" style="display:none;"></div>
+    <div class="share-card-foot">2026 독서결산</div>
   </div>
 </div>
 
@@ -903,6 +1009,8 @@ footer{padding:40px 0 60px; border-top:1px solid var(--line); font-size:12px; co
       <div id="abRatingWrap">
         <label for="abRating">별점 (0~5, 0.5 단위)</label>
         <input type="number" id="abRating" min="0" max="5" step="0.5" value="3">
+        <label for="abReview" style="margin-top:10px;">한 줄 감상평 (선택)</label>
+        <input type="text" id="abReview" placeholder="이 책, 한 줄로 남긴다면?" maxlength="120">
       </div>
       <div>
         <label for="abCover">표지 이미지 (선택)</label>
@@ -1138,6 +1246,37 @@ const genreOrder = Object.keys(genreCounts).sort((a,b)=> genreCounts[b]-genreCou
   document.getElementById('heroSaved').textContent = totalSaved.toLocaleString();
   document.getElementById('heroRating').textContent = avgRating.toFixed(1);
   document.getElementById('heroDesc').textContent = `올해 완독한 ${totalBooks}권과 중단한 ${dropped.length}권, 실제 독서 기간·별점·적립까지 모두 모아 서가로 세웠어요.`;
+
+  // ---- 완독 스트릭 (연속 독서일) ----
+  const DAY_MS = 24*60*60*1000;
+  function dayKey(d){ const dt = new Date(d); dt.setHours(0,0,0,0); return dt.getTime(); }
+  const activeDays = new Set();
+  function markRange(startStr, endStr){
+    if(!startStr || !endStr) return;
+    let cur = dayKey(startStr);
+    const end = dayKey(endStr);
+    if(isNaN(cur) || isNaN(end)) return;
+    while(cur <= end){ activeDays.add(cur); cur += DAY_MS; }
+  }
+  const todayKey = dayKey(new Date());
+  books.forEach(b=> markRange(b.start, b.end));
+  dropped.forEach(d=> markRange(d.start, d.end));
+  reading.forEach(r=> markRange(r.start, todayKey));
+
+  let longestStreak = 0, currentStreak = 0;
+  if(activeDays.size){
+    const sortedDays = [...activeDays].sort((a,b)=>a-b);
+    let run = 1;
+    longestStreak = 1;
+    for(let i=1;i<sortedDays.length;i++){
+      run = (sortedDays[i]-sortedDays[i-1]===DAY_MS) ? run+1 : 1;
+      if(run>longestStreak) longestStreak = run;
+    }
+    let cursor = todayKey;
+    while(activeDays.has(cursor)){ currentStreak++; cursor -= DAY_MS; }
+  }
+  document.getElementById('heroStreak').textContent = currentStreak;
+  document.getElementById('heroLongestStreak').textContent = longestStreak;
   document.getElementById('genreDescCount').textContent = totalBooks;
   document.getElementById('shelfCaptionCount').textContent = `완독 ${totalBooks}권 + 중단 ${dropped.length}권 · 최근 읽은 순`;
   const totalForCovers = books.length + dropped.length;
@@ -1383,8 +1522,15 @@ allForShelf.forEach(b => {
   pill.style.color = txt;
   const periodStr = b.kind==='중단' ? `${dstr(b.start)} ~ ${dstr(b.end)} 중단` : `${dstr(b.start)} ~ ${dstr(b.end)} · ${b.days}일`;
   pill.title = `${b.author} · ${b.pages}p · ${periodStr}`;
+  pill.dataset.search = `${b.title} ${b.author}`.toLowerCase();
   pill.innerHTML = `<div class="pill-title">${b.title}</div>${b.kind==='중단' ? '<span class="pill-dropped-tag">중단</span>' : ''}`;
   shelfRow.appendChild(pill);
+});
+document.getElementById('shelfSearchInput').addEventListener('input', (e)=>{
+  const q = e.target.value.trim().toLowerCase();
+  shelfRow.querySelectorAll('.pill').forEach(pill=>{
+    pill.style.display = (!q || pill.dataset.search.includes(q)) ? '' : 'none';
+  });
 });
 
 /* ---------------- cover grid (with sort + dropped included) ---------------- */
@@ -1394,6 +1540,10 @@ const allForGrid = [...books.map(b=>({...b, kind:'완독'})), ...dropped.map(d=>
 function renderCoverGrid(field, dir){
   coverGrid.innerHTML = '';
   let arr = [...allForGrid];
+  const q = (document.getElementById('coverSearchInput').value || '').trim().toLowerCase();
+  if(q){
+    arr = arr.filter(b => `${b.title} ${b.author}`.toLowerCase().includes(q));
+  }
   const mul = dir==='asc' ? 1 : -1;
   if(field==='order'){
     arr.sort((a,b)=> mul*(new Date(a.end) - new Date(b.end)));
@@ -1501,6 +1651,14 @@ async function openSynopsis(b){
   document.getElementById('synopsisTitle').textContent = b.title;
   document.getElementById('synopsisAuthor').textContent = b.author;
   document.getElementById('synopsisText').textContent = synopsis;
+  const reviewEl = document.getElementById('synopsisReview');
+  if(b.review){
+    reviewEl.textContent = `💬 “${b.review}”`;
+    reviewEl.style.display = 'block';
+  } else {
+    reviewEl.textContent = '';
+    reviewEl.style.display = 'none';
+  }
   const sourceEl = document.getElementById('synopsisSource');
   sourceEl.textContent = source ? `줄거리 출처: ${source}` : '';
   sourceEl.style.display = source ? 'block' : 'none';
@@ -1510,6 +1668,8 @@ async function openSynopsis(b){
   const delBtn = document.getElementById('synopsisDeleteBtn');
   delBtn.dataset.no = b.no;
   delBtn.dataset.status = b.status === '완독' ? '완독' : '중단';
+  const shareBtn = document.getElementById('synopsisShareBtn');
+  shareBtn.style.display = (b.kind === '완독' || b.status === '완독') ? 'block' : 'none';
   synopsisOverlay.classList.add('open');
 }
 document.getElementById('synopsisClose').addEventListener('click', ()=>{ synopsisOverlay.classList.remove('open'); });
@@ -1548,6 +1708,48 @@ document.getElementById('synopsisDeleteBtn').addEventListener('click', async ()=
   location.reload();
 });
 
+document.getElementById('synopsisShareBtn').addEventListener('click', ()=>{
+  const b = currentSynopsisBook;
+  if(!b) return;
+  document.getElementById('shareCardCover').innerHTML = b.cover
+    ? `<img src="${b.cover}" alt="${b.title} 표지">`
+    : '';
+  document.getElementById('shareCardGenre').textContent = b.genre || '';
+  document.getElementById('shareCardTitle').textContent = b.title;
+  document.getElementById('shareCardAuthor').textContent = b.author;
+  document.getElementById('shareCardRating').innerHTML = (b.rating != null) ? starWidget(b.rating) : '';
+  document.getElementById('shareCardPeriod').textContent = b.start && b.end
+    ? `${dstr(b.start)} ~ ${dstr(b.end)} · ${b.days || ''}일간 완독`
+    : '';
+  const reviewEl = document.getElementById('shareCardReview');
+  if(b.review){
+    reviewEl.textContent = `“${b.review}”`;
+    reviewEl.style.display = 'block';
+  } else {
+    reviewEl.style.display = 'none';
+  }
+  if(typeof html2canvas === 'undefined'){
+    alert('이미지 저장 기능을 불러오지 못했어요. 인터넷 연결을 확인해주세요.');
+    return;
+  }
+  const btn = document.getElementById('synopsisShareBtn');
+  const originalText = btn.textContent;
+  btn.textContent = '카드 만드는 중...';
+  btn.disabled = true;
+  html2canvas(document.getElementById('shareCardInner'), {scale:3, useCORS:true, backgroundColor:'#FDFCF9'}).then(canvas=>{
+    btn.textContent = originalText;
+    btn.disabled = false;
+    const link = document.createElement('a');
+    link.download = `${b.title}-완독카드.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  }).catch(()=>{
+    btn.textContent = originalText;
+    btn.disabled = false;
+    alert('카드를 만드는 데 문제가 생겼어요. 다시 시도해주세요.');
+  });
+});
+
 const sortFieldEl = document.getElementById('sortField');
 const sortDirBtn = document.getElementById('sortDirBtn');
 function refreshSort(){
@@ -1557,6 +1759,7 @@ function refreshSort(){
   renderCoverGrid(field, dir);
 }
 sortFieldEl.addEventListener('change', refreshSort);
+document.getElementById('coverSearchInput').addEventListener('input', refreshSort);
 sortDirBtn.addEventListener('click', ()=>{
   sortDirBtn.dataset.dir = sortDirBtn.dataset.dir==='asc' ? 'desc' : 'asc';
   refreshSort();
@@ -1785,6 +1988,24 @@ const maxWd = Math.max(...wdCounts, 1);
   row.innerHTML = `<div class="name">${wdNames[idx]}요일</div><div class="bar-track"><div class="bar-fill" style="width:${wdCounts[idx]/maxWd*100}%; background:var(--accent-blue)"></div></div><div class="count">${wdCounts[idx]}권</div>`;
   weekdayList.appendChild(row);
 });
+
+/* ---------------- author stats (가장 많이 읽은 작가) ---------------- */
+const authorStatList = document.getElementById('authorStatList');
+const authorCounts = {};
+books.forEach(b => { if(b.author) authorCounts[b.author] = (authorCounts[b.author]||0)+1; });
+const authorEntries = Object.entries(authorCounts).sort((a,b)=> b[1]-a[1]).slice(0,5);
+if(authorEntries.length){
+  const maxAuthorCount = authorEntries[0][1];
+  authorEntries.forEach(([author, count])=>{
+    const row = document.createElement('div');
+    row.className = 'genre-row';
+    const rereadTag = count > 1 ? ` <span style="color:var(--gray-1); font-weight:500;">(재독 포함)</span>` : '';
+    row.innerHTML = `<div class="name">${author}${rereadTag}</div><div class="bar-track"><div class="bar-fill" style="width:${count/maxAuthorCount*100}%; background:var(--accent-rose)"></div></div><div class="count">${count}권</div>`;
+    authorStatList.appendChild(row);
+  });
+} else {
+  authorStatList.innerHTML = `<div style="color:var(--gray-1); font-size:14px;">아직 완독한 책이 없어요.</div>`;
+}
 
 /* ---------------- savings chart ---------------- */
 const svgNS = "http://www.w3.org/2000/svg";
@@ -2232,6 +2453,20 @@ window.addEventListener('beforeprint', ()=>{
 })();
 } // end renderApp
 
+/* ---------------- dark mode toggle ---------------- */
+const themeToggleBtn = document.getElementById('themeToggleBtn');
+function refreshThemeToggleLabel(){
+  const isDark = document.documentElement.classList.contains('dark-mode');
+  themeToggleBtn.textContent = isDark ? '☀️' : '🌙';
+}
+refreshThemeToggleLabel();
+themeToggleBtn.addEventListener('click', async ()=>{
+  document.documentElement.classList.toggle('dark-mode');
+  refreshThemeToggleLabel();
+  const isDark = document.documentElement.classList.contains('dark-mode');
+  await storageSet('themeMode', isDark ? 'dark' : 'light');
+});
+
 /* ---------------- wishlist (읽고 싶은 책) ---------------- */
 const wishlistListEl = document.getElementById('wishlistList');
 const wishlistEmptyEl = document.getElementById('wishlistEmpty');
@@ -2247,6 +2482,10 @@ function renderWishlist(){
       <button class="wishlist-delete" data-id="${w.id}" type="button">삭제</button>
       ${w.cover ? `<div class="wishlist-cover"><img src="${w.cover}" alt=""></div>` : ''}
       <div class="name">${w.title}${metaParts.length ? `<span>${metaParts.join(' · ')}</span>` : ''}</div>
+      <div class="wishlist-convert-row">
+        <button class="wishlist-convert" data-id="${w.id}" data-target="읽는 중" type="button">읽기 시작</button>
+        <button class="wishlist-convert" data-id="${w.id}" data-target="완독" type="button">완독으로 표시</button>
+      </div>
     `;
     wishlistListEl.appendChild(card);
   });
@@ -2255,6 +2494,12 @@ function renderWishlist(){
       wishlist = wishlist.filter(w=>String(w.id) !== String(btn.dataset.id));
       await storageSet('allWishlist', wishlist);
       renderWishlist();
+    });
+  });
+  wishlistListEl.querySelectorAll('.wishlist-convert').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const item = wishlist.find(w=>String(w.id) === String(btn.dataset.id));
+      if(item) openWishlistConvertModal(item, btn.dataset.target);
     });
   });
 }
@@ -2418,8 +2663,8 @@ openAddBookBtn.addEventListener('click', ()=>{
   updateAbFieldsForStatus();
   addBookOverlay.classList.add('open');
 });
-addBookClose.addEventListener('click', ()=>{ addBookOverlay.classList.remove('open'); abEditContext = null; });
-addBookOverlay.addEventListener('click', (e)=>{ if(e.target === addBookOverlay){ addBookOverlay.classList.remove('open'); abEditContext = null; } });
+addBookClose.addEventListener('click', ()=>{ addBookOverlay.classList.remove('open'); abEditContext = null; abConvertFromWishlistId = null; });
+addBookOverlay.addEventListener('click', (e)=>{ if(e.target === addBookOverlay){ addBookOverlay.classList.remove('open'); abEditContext = null; abConvertFromWishlistId = null; } });
 
 abGenreSelect.addEventListener('change', ()=>{
   abGenreNew.style.display = abGenreSelect.value === '__new__' ? 'block' : 'none';
@@ -2462,6 +2707,29 @@ addBookForm.querySelectorAll('input[name="status"]').forEach(r=>{
 });
 
 let abEditContext = null; // { no, sourceStatus } when converting/editing an existing book
+let abConvertFromWishlistId = null; // set when converting a wishlist item into 읽는 중/완독
+
+function openWishlistConvertModal(item, targetStatus){
+  populateGenreSelect();
+  resetAbSearch();
+  abSelectedCover = item.cover || null;
+  abEditContext = null;
+  abConvertFromWishlistId = item.id;
+  document.getElementById('addBookModalTitle').textContent =
+    targetStatus === '완독' ? '완독으로 표시하기' : '읽기 시작하기';
+  document.querySelector(`input[name="status"][value="${targetStatus}"]`).checked = true;
+  document.getElementById('abTitle').value = item.title || '';
+  document.getElementById('abAuthor').value = item.author || '';
+  if(item.genre && [...abGenreSelect.options].some(o=>o.value===item.genre)) abGenreSelect.value = item.genre;
+  document.getElementById('abPages').value = '';
+  document.getElementById('abPrice').value = item.price || '';
+  document.getElementById('abStart').value = '';
+  document.getElementById('abEnd').value = '';
+  document.getElementById('abRating').value = 3;
+  document.getElementById('abReview').value = '';
+  updateAbFieldsForStatus();
+  addBookOverlay.classList.add('open');
+}
 
 function openConvertModal(readingBook, targetStatus){
   populateGenreSelect();
@@ -2479,6 +2747,7 @@ function openConvertModal(readingBook, targetStatus){
   document.getElementById('abStart').value = readingBook.start || '';
   document.getElementById('abEnd').value = '';
   document.getElementById('abRating').value = 3;
+  document.getElementById('abReview').value = '';
   updateAbFieldsForStatus();
   addBookOverlay.classList.add('open');
 }
@@ -2499,6 +2768,7 @@ function openEditBookModal(book, currentStatus){
   document.getElementById('abStart').value = book.start || '';
   document.getElementById('abEnd').value = book.end || '';
   document.getElementById('abRating').value = book.rating != null ? book.rating : 3;
+  document.getElementById('abReview').value = book.review || '';
   updateAbFieldsForStatus();
   addBookOverlay.classList.add('open');
 }
@@ -2528,6 +2798,7 @@ addBookForm.addEventListener('submit', async (e)=>{
   const start = document.getElementById('abStart').value;
   const end = document.getElementById('abEnd').value;
   const rating = status === '완독' ? parseFloat(document.getElementById('abRating').value) : null;
+  const review = document.getElementById('abReview').value.trim();
   const coverFile = document.getElementById('abCover').files[0];
 
   if(status === '읽고싶음'){
@@ -2609,6 +2880,7 @@ addBookForm.addEventListener('submit', async (e)=>{
 
   if(status === '완독'){
     newBook.rating = rating;
+    if(review) newBook.review = review;
     newBook.status = '완독';
     newBook.price = price;
     books.push(newBook);
@@ -2626,6 +2898,12 @@ addBookForm.addEventListener('submit', async (e)=>{
     const customSynopsis = (await storageGet('customSynopsis')) || {};
     customSynopsis[no] = abSelectedSynopsis;
     await storageSet('customSynopsis', customSynopsis);
+  }
+
+  if(abConvertFromWishlistId){
+    wishlist = wishlist.filter(w=>String(w.id) !== String(abConvertFromWishlistId));
+    await storageSet('allWishlist', wishlist);
+    abConvertFromWishlistId = null;
   }
 
   abEditContext = null;
