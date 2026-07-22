@@ -299,6 +299,14 @@ section{margin:80px 0;}
 .quote-form textarea{min-height:80px; resize:vertical;}
 .quote-form button{align-self:flex-start; font-family:'Pretendard',sans-serif; font-size:13px; font-weight:700; padding:10px 20px; background:var(--ink); color:#fff; border:none; border-radius:4px; cursor:pointer;}
 .quote-form button:hover{background:#000;}
+.wishlist-empty{color:var(--gray-1); font-size:14px; padding:20px 0;}
+.wishlist-list{display:flex; flex-direction:column; gap:14px;}
+.wishlist-card{background:var(--paper); border:1px dashed var(--line); padding:16px 18px; position:relative;}
+.wishlist-card .name{font-size:16px; font-weight:700;}
+.wishlist-card .name span{display:block; font-size:12.5px; font-weight:400; color:var(--gray-1); margin-top:4px;}
+.wishlist-card .memo{font-size:13px; color:var(--ink-soft); margin-top:10px; white-space:pre-wrap; line-height:1.5;}
+.wishlist-delete{position:absolute; top:14px; right:16px; background:none; border:none; color:var(--gray-1); font-size:13px; font-weight:700; cursor:pointer; padding:4px 8px; border-radius:4px;}
+.wishlist-delete:hover{background:#FBEBEA; color:#B3403C;}
 .quote-groups-wrap{display:flex; flex-direction:column; gap:14px;}
 .quote-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(240px,1fr)); gap:20px;}
 .quote-group{border:1px solid var(--line); border-radius:6px; padding:0; break-inside:avoid; background:var(--paper);}
@@ -596,6 +604,7 @@ footer{padding:40px 0 60px; border-top:1px solid var(--line); font-size:12px; co
     <a href="#dropped"><b>07</b>중단</a>
     <a href="#quotes"><b>08</b>문장</a>
     <a href="#insight"><b>09</b>인사이트</a>
+    <a href="#wishlist"><b>10</b>읽고싶은 책</a>
   </div>
 </nav>
 <button id="openAddBookBtn" class="fab-add">+ 책 추가</button>
@@ -803,6 +812,25 @@ footer{padding:40px 0 60px; border-top:1px solid var(--line); font-size:12px; co
       <div class="wrap-carousel" id="wrapCarousel"></div>
       <div class="wrap-dots" id="wrapDots"></div>
     </div>
+  </section>
+
+  <section id="wishlist" class="tab-panel">
+    <div class="section-head">
+      <span class="idx">10</span>
+      <div><h2>읽고 싶은 책</h2><p class="desc">언젠가 읽고 싶은 책을 목록으로 모아두세요.</p></div>
+    </div>
+    <form class="quote-form" id="wishlistForm">
+      <input type="text" id="wishTitle" placeholder="책 제목" required>
+      <div class="addbook-row">
+        <input type="text" id="wishAuthor" placeholder="저자 (선택)">
+        <input type="text" id="wishGenre" placeholder="장르 (선택)" list="wishGenreOptions">
+        <datalist id="wishGenreOptions"></datalist>
+      </div>
+      <textarea id="wishMemo" placeholder="왜 읽고 싶은지, 어디서 알게 됐는지 등 메모 (선택)"></textarea>
+      <button type="submit">목록에 추가하기</button>
+    </form>
+    <div class="wishlist-empty" id="wishlistEmpty" style="display:none;">아직 담아둔 책이 없어요. 위에서 추가해보세요.</div>
+    <div class="wishlist-list" id="wishlistList"></div>
   </section>
 
   <footer>2026 독서 결산 · 페이지·별점·기간·가격은 독서 기록 앱의 실제 데이터를 기반으로 했고, 표지는 직접 올려주신 원본 이미지를 사용했어요. 형식 태그·중단 사유·인상 깊은 문장은 이 화면 안에 저장돼요.</footer>
@@ -1049,6 +1077,7 @@ async function storageSet(key, value){
 let books = SEED_BOOKS.slice();
 let dropped = SEED_DROPPED.slice();
 let reading = [];
+let wishlist = [];
 
 async function renderApp(){
 document.getElementById('coverGrid').innerHTML = '';
@@ -2045,11 +2074,66 @@ document.getElementById('quoteAddBtn').addEventListener('click', async ()=>{
 });
 renderQuotes();
 
+/* ---------------- wishlist (읽고 싶은 책) ---------------- */
+const wishlistListEl = document.getElementById('wishlistList');
+const wishlistEmptyEl = document.getElementById('wishlistEmpty');
+const wishGenreOptions = document.getElementById('wishGenreOptions');
+
+function populateWishGenreOptions(){
+  wishGenreOptions.innerHTML = '';
+  Object.keys(genreColor).forEach(g=>{
+    const opt = document.createElement('option');
+    opt.value = g;
+    wishGenreOptions.appendChild(opt);
+  });
+}
+
+function renderWishlist(){
+  populateWishGenreOptions();
+  wishlistListEl.innerHTML = '';
+  wishlistEmptyEl.style.display = wishlist.length ? 'none' : 'block';
+  wishlist.slice().reverse().forEach(w=>{
+    const card = document.createElement('div');
+    card.className = 'wishlist-card';
+    const metaParts = [w.author, w.genre].filter(Boolean);
+    card.innerHTML = `
+      <button class="wishlist-delete" data-id="${w.id}" type="button">삭제</button>
+      <div class="name">${w.title}${metaParts.length ? `<span>${metaParts.join(' · ')}</span>` : ''}</div>
+      ${w.memo ? `<div class="memo">${w.memo}</div>` : ''}
+    `;
+    wishlistListEl.appendChild(card);
+  });
+  wishlistListEl.querySelectorAll('.wishlist-delete').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      wishlist = wishlist.filter(w=>String(w.id) !== String(btn.dataset.id));
+      await storageSet('allWishlist', wishlist);
+      renderWishlist();
+    });
+  });
+}
+
+document.getElementById('wishlistForm').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const title = document.getElementById('wishTitle').value.trim();
+  if(!title) return;
+  const author = document.getElementById('wishAuthor').value.trim();
+  const genre = document.getElementById('wishGenre').value.trim();
+  const memo = document.getElementById('wishMemo').value.trim();
+  wishlist.push({ id: Date.now(), title, author, genre, memo });
+  await storageSet('allWishlist', wishlist);
+  if(genre && !genreColor[genre]){
+    await ensureGenreColors();
+  }
+  e.target.reset();
+  renderWishlist();
+});
+
 /* ---------------- export / import / print ---------------- */
 document.getElementById('exportBtn').addEventListener('click', async ()=>{
   const data = {};
   data['allBooks'] = await storageGet('allBooks');
   data['allDropped'] = await storageGet('allDropped');
+  data['allWishlist'] = await storageGet('allWishlist');
   data['customGenreColors'] = await storageGet('customGenreColors');
   data['quotes'] = await storageGet('quotes');
   const allNos = [...books.map(b=>b.no), ...dropped.map(d=>d.no)];
@@ -2087,7 +2171,7 @@ document.getElementById('printBtn').addEventListener('click', ()=>{ window.print
 document.getElementById('resetBtn').addEventListener('click', async ()=>{
   const ok = confirm('내가 추가한 책·문장·매체 선택·중단 사유가 전부 사라지고, 이 파일에 들어있는 최신 기본 데이터로 되돌아가요.\n계속하기 전에 "내보내기"로 백업하셨나요?\n\n초기화하시겠어요?');
   if(!ok) return;
-  const keys = ['allBooks','allDropped','customGenreColors','quotes'];
+  const keys = ['allBooks','allDropped','allWishlist','customGenreColors','quotes'];
   for(const no of [...SEED_BOOKS.map(b=>b.no), ...SEED_DROPPED.map(d=>d.no)]) keys.push('format:'+no);
   for(let no=1; no<=200; no++) keys.push('format:'+no, 'memo:'+no);
   for(const k of keys){
@@ -2211,7 +2295,7 @@ window.addEventListener('beforeprint', ()=>{
 
 async function ensureGenreColors(){
   const customColors = (await storageGet('customGenreColors')) || {};
-  const allGenres = new Set([...books.map(b=>b.genre), ...dropped.map(d=>d.genre), ...reading.map(r=>r.genre)]);
+  const allGenres = new Set([...books.map(b=>b.genre), ...dropped.map(d=>d.genre), ...reading.map(r=>r.genre), ...wishlist.map(w=>w.genre).filter(Boolean)]);
   let changed = false;
   let idx = Object.keys(customColors).length;
   allGenres.forEach(g=>{
@@ -2245,8 +2329,15 @@ async function loadAndRenderApp(){
   } else {
     await storageSet('allReading', reading);
   }
+  const savedWishlist = await storageGet('allWishlist');
+  if(savedWishlist && Array.isArray(savedWishlist)){
+    wishlist = savedWishlist;
+  } else {
+    await storageSet('allWishlist', wishlist);
+  }
   await ensureGenreColors();
   await renderApp();
+  renderWishlist();
 }
 /* ---------------- add book modal ---------------- */
 const addBookOverlay = document.getElementById('addBookOverlay');
