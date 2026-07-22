@@ -393,6 +393,11 @@ footer{padding:40px 0 60px; border-top:1px solid var(--line); font-size:12px; co
 .synopsis-author{font-size:13px; color:var(--gray-1); text-align:center; margin-top:4px; font-weight:600;}
 .synopsis-text{font-size:14px; line-height:1.7; color:var(--ink-soft); margin-top:18px;}
 .synopsis-source{font-size:11px; color:var(--gray-2); margin-top:16px; text-align:right;}
+.synopsis-delete{
+  margin-top:16px; width:100%; font-family:'Pretendard',sans-serif; font-size:12.5px; font-weight:700;
+  padding:10px; border-radius:6px; border:1px solid var(--line); background:none; color:#B3403C; cursor:pointer;
+}
+.synopsis-delete:hover{background:#FBEBEA; border-color:#B3403C;}
 
 /* ADD BOOK MODAL */
 .addbook-box{max-width:440px;}
@@ -708,7 +713,8 @@ footer{padding:40px 0 60px; border-top:1px solid var(--line); font-size:12px; co
     <div class="synopsis-title" id="synopsisTitle"></div>
     <div class="synopsis-author" id="synopsisAuthor"></div>
     <div class="synopsis-text" id="synopsisText"></div>
-    <div class="synopsis-source">줄거리 출처: 교보문고</div>
+    <div class="synopsis-source" id="synopsisSource"></div>
+    <button class="synopsis-delete" id="synopsisDeleteBtn">이 책 삭제하기</button>
   </div>
 </div>
 
@@ -1221,18 +1227,53 @@ refreshFormatSummary();
 
 /* ---------------- synopsis modal ---------------- */
 const synopsisOverlay = document.getElementById('synopsisOverlay');
-function openSynopsis(b){
-  const synopsis = synopsisData[b.no] || '아직 줄거리 정보가 없어요. 직접 추가한 책이라 자동으로 채워지지 않았어요.';
+async function openSynopsis(b){
+  const customSynopsis = (await storageGet('customSynopsis')) || {};
+  const synopsis = synopsisData[b.no] || customSynopsis[b.no] || '아직 줄거리 정보가 없어요. 직접 추가한 책이라 자동으로 채워지지 않았어요.';
+  const source = synopsisData[b.no] ? '교보문고' : (customSynopsis[b.no] ? '알라딘' : null);
   document.getElementById('synopsisTitle').textContent = b.title;
   document.getElementById('synopsisAuthor').textContent = b.author;
   document.getElementById('synopsisText').textContent = synopsis;
+  const sourceEl = document.getElementById('synopsisSource');
+  sourceEl.textContent = source ? `줄거리 출처: ${source}` : '';
+  sourceEl.style.display = source ? 'block' : 'none';
   const coverEl = document.getElementById('synopsisCover');
   coverEl.innerHTML = b.cover ? `<img src="${b.cover}" alt="${b.title} 표지">` : '';
   coverEl.style.display = b.cover ? 'block' : 'none';
+  const delBtn = document.getElementById('synopsisDeleteBtn');
+  delBtn.dataset.no = b.no;
+  delBtn.dataset.status = b.status === '완독' ? '완독' : '중단';
   synopsisOverlay.classList.add('open');
 }
 document.getElementById('synopsisClose').addEventListener('click', ()=>{ synopsisOverlay.classList.remove('open'); });
 synopsisOverlay.addEventListener('click', (e)=>{ if(e.target === synopsisOverlay) synopsisOverlay.classList.remove('open'); });
+document.getElementById('synopsisDeleteBtn').addEventListener('click', async ()=>{
+  const btn = document.getElementById('synopsisDeleteBtn');
+  const no = Number(btn.dataset.no);
+  const status = btn.dataset.status;
+  const title = document.getElementById('synopsisTitle').textContent;
+  const ok = confirm(`"${title}"을(를) 정말 삭제할까요? 문장·메모·매체 기록도 함께 사라지고, 되돌릴 수 없어요.`);
+  if(!ok) return;
+  if(status === '완독'){
+    const idx = books.findIndex(b=>b.no===no);
+    if(idx>-1) books.splice(idx,1);
+    await storageSet('allBooks', books);
+  } else {
+    const idx = dropped.findIndex(d=>d.no===no);
+    if(idx>-1) dropped.splice(idx,1);
+    await storageSet('allDropped', dropped);
+  }
+  // clean up related per-book data
+  await storageSet('memo:'+no, '');
+  await storageSet('format:'+no, null);
+  const allQuotes = (await storageGet('quotes')) || [];
+  const remainingQuotes = allQuotes.filter(q=> String(q.bookNo) !== String(no));
+  if(remainingQuotes.length !== allQuotes.length) await storageSet('quotes', remainingQuotes);
+  const customSynopsis = (await storageGet('customSynopsis')) || {};
+  if(customSynopsis[no]){ delete customSynopsis[no]; await storageSet('customSynopsis', customSynopsis); }
+  synopsisOverlay.classList.remove('open');
+  location.reload();
+});
 
 const sortFieldEl = document.getElementById('sortField');
 const sortDirBtn = document.getElementById('sortDirBtn');
@@ -1928,6 +1969,7 @@ const abGenreNew = document.getElementById('abGenreNew');
 const abRatingWrap = document.getElementById('abRatingWrap');
 const MOTIFS = ['circle','blob','stripe','scribble'];
 let abSelectedCover = null;
+let abSelectedSynopsis = null;
 
 function guessGenreFromCategory(categoryName){
   if(!categoryName) return null;
@@ -1944,6 +1986,7 @@ function resetAbSearch(){
   document.getElementById('abSearchInput').value = '';
   document.getElementById('abSearchResults').innerHTML = '';
   abSelectedCover = null;
+  abSelectedSynopsis = null;
 }
 
 document.getElementById('abSearchBtn').addEventListener('click', async ()=>{
@@ -2001,6 +2044,7 @@ async function selectAbSearchResult(itemId){
       abGenreSelect.value = guessedGenre;
     }
     abSelectedCover = d.cover || null;
+    abSelectedSynopsis = d.description || null;
     resultsEl.innerHTML = `<div class="ab-search-selected">"${d.title}" 선택했어요 — 장르·페이지 확인하고, 읽은 기간·별점은 직접 채워주세요.</div>`;
   }catch(e){
     resultsEl.innerHTML = '<div class="ab-search-empty">불러오기에 실패했어요. 잠시 후 다시 시도해주세요.</div>';
@@ -2098,6 +2142,12 @@ addBookForm.addEventListener('submit', async (e)=>{
   } else {
     dropped.push(newBook);
     await storageSet('allDropped', dropped);
+  }
+
+  if(abSelectedSynopsis){
+    const customSynopsis = (await storageGet('customSynopsis')) || {};
+    customSynopsis[no] = abSelectedSynopsis;
+    await storageSet('customSynopsis', customSynopsis);
   }
 
   addBookForm.reset();
