@@ -421,6 +421,31 @@ footer{padding:40px 0 60px; border-top:1px solid var(--line); font-size:12px; co
 .addbook-submit:hover{background:#000;}
 .addbook-hint{font-size:11.5px; color:var(--gray-1);}
 .addbook-newgenre{margin-top:8px;}
+
+/* BOOK SEARCH (Aladin) */
+.ab-search-block{margin-bottom:20px; padding-bottom:18px; border-bottom:1px dashed var(--line);}
+.ab-search-row{display:flex; gap:8px;}
+.ab-search-row input{
+  flex:1; font-family:'Pretendard',sans-serif; font-size:14px; padding:9px 10px;
+  border:1px solid var(--line); border-radius:6px; background:var(--paper); color:var(--ink);
+}
+.ab-search-row button{
+  font-family:'Pretendard',sans-serif; font-size:13px; font-weight:700; padding:9px 16px;
+  border:none; border-radius:6px; background:var(--ink); color:#fff; cursor:pointer;
+}
+.ab-search-row button:hover{background:#000;}
+#abSearchResults{margin-top:10px; max-height:240px; overflow-y:auto; display:flex; flex-direction:column; gap:6px;}
+.ab-search-item{
+  display:flex; gap:10px; align-items:center; padding:8px; border:1px solid var(--line); border-radius:6px;
+  cursor:pointer; background:var(--paper);
+}
+.ab-search-item:hover{background:var(--bg);}
+.ab-search-item img{width:36px; height:52px; object-fit:cover; border-radius:2px; flex-shrink:0; background:var(--line);}
+.ab-search-item-info{min-width:0;}
+.ab-search-item-title{font-size:13px; font-weight:700; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.ab-search-item-meta{font-size:11.5px; color:var(--gray-1); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.ab-search-loading, .ab-search-empty{font-size:12.5px; color:var(--gray-1); padding:8px 2px;}
+.ab-search-selected{font-size:12.5px; color:var(--ink-soft); padding:8px 2px; font-weight:600;}
 .cover-card{cursor:pointer;}
 
 /* WRAPPED CARDS (9:16 story-style summary) */
@@ -691,6 +716,15 @@ footer{padding:40px 0 60px; border-top:1px solid var(--line); font-size:12px; co
   <div class="synopsis-box addbook-box">
     <button class="synopsis-close" id="addBookClose">✕</button>
     <h3>책 추가하기</h3>
+
+    <div class="ab-search-block">
+      <div class="ab-search-row">
+        <input type="text" id="abSearchInput" placeholder="책 제목으로 검색 (알라딘)">
+        <button type="button" id="abSearchBtn">검색</button>
+      </div>
+      <div id="abSearchResults"></div>
+    </div>
+
     <form class="addbook-form" id="addBookForm">
       <div class="addbook-status">
         <label><input type="radio" name="status" value="완독" checked><span>완독</span></label>
@@ -1893,6 +1927,85 @@ const abGenreSelect = document.getElementById('abGenre');
 const abGenreNew = document.getElementById('abGenreNew');
 const abRatingWrap = document.getElementById('abRatingWrap');
 const MOTIFS = ['circle','blob','stripe','scribble'];
+let abSelectedCover = null;
+
+function guessGenreFromCategory(categoryName){
+  if(!categoryName) return null;
+  const c = categoryName;
+  if(c.includes('에세이')) return '에세이';
+  if(c.includes('인문')) return '인문';
+  if(c.includes('자기계발')) return '자기계발';
+  if(c.includes('외국') || c.includes('해외')) return '해외소설';
+  if(c.includes('소설')) return '국내소설';
+  return null;
+}
+
+function resetAbSearch(){
+  document.getElementById('abSearchInput').value = '';
+  document.getElementById('abSearchResults').innerHTML = '';
+  abSelectedCover = null;
+}
+
+document.getElementById('abSearchBtn').addEventListener('click', async ()=>{
+  const q = document.getElementById('abSearchInput').value.trim();
+  if(!q) return;
+  const resultsEl = document.getElementById('abSearchResults');
+  resultsEl.innerHTML = '<div class="ab-search-loading">검색 중...</div>';
+  try{
+    const res = await fetch(`/.netlify/functions/book-search?action=search&query=${encodeURIComponent(q)}`);
+    const data = await res.json();
+    if(data.error){
+      resultsEl.innerHTML = `<div class="ab-search-empty">검색에 실패했어요: ${data.error}</div>`;
+      return;
+    }
+    if(!data.items || !data.items.length){
+      resultsEl.innerHTML = '<div class="ab-search-empty">검색 결과가 없어요. 직접 입력해주세요.</div>';
+      return;
+    }
+    resultsEl.innerHTML = '';
+    data.items.forEach(it=>{
+      const row = document.createElement('div');
+      row.className = 'ab-search-item';
+      row.innerHTML = `
+        <img src="${it.cover || ''}" alt="" onerror="this.style.visibility='hidden'">
+        <div class="ab-search-item-info">
+          <div class="ab-search-item-title">${it.title}</div>
+          <div class="ab-search-item-meta">${it.author || ''}${it.publisher ? ' · ' + it.publisher : ''}</div>
+        </div>
+      `;
+      row.addEventListener('click', ()=> selectAbSearchResult(it.itemId));
+      resultsEl.appendChild(row);
+    });
+  }catch(e){
+    resultsEl.innerHTML = '<div class="ab-search-empty">검색에 실패했어요. 잠시 후 다시 시도해주세요.</div>';
+  }
+});
+
+async function selectAbSearchResult(itemId){
+  const resultsEl = document.getElementById('abSearchResults');
+  resultsEl.innerHTML = '<div class="ab-search-loading">불러오는 중...</div>';
+  try{
+    const res = await fetch(`/.netlify/functions/book-search?action=detail&itemId=${encodeURIComponent(itemId)}`);
+    const d = await res.json();
+    if(d.error){
+      resultsEl.innerHTML = `<div class="ab-search-empty">불러오기에 실패했어요: ${d.error}</div>`;
+      return;
+    }
+    document.getElementById('abTitle').value = d.title || '';
+    // Aladin author field often looks like "지은이 (지은이), 옮긴이 (옮긴이)" - keep first name only
+    document.getElementById('abAuthor').value = (d.author || '').split(',')[0].replace(/\(.*?\)/g,'').trim();
+    if(d.priceStandard) document.getElementById('abPrice').value = d.priceStandard;
+    if(d.pages) document.getElementById('abPages').value = d.pages;
+    const guessedGenre = guessGenreFromCategory(d.categoryName);
+    if(guessedGenre && [...abGenreSelect.options].some(o=>o.value===guessedGenre)){
+      abGenreSelect.value = guessedGenre;
+    }
+    abSelectedCover = d.cover || null;
+    resultsEl.innerHTML = `<div class="ab-search-selected">"${d.title}" 선택했어요 — 장르·페이지 확인하고, 읽은 기간·별점은 직접 채워주세요.</div>`;
+  }catch(e){
+    resultsEl.innerHTML = '<div class="ab-search-empty">불러오기에 실패했어요. 잠시 후 다시 시도해주세요.</div>';
+  }
+}
 
 function populateGenreSelect(){
   const existing = [...abGenreSelect.querySelectorAll('option[data-builtin]')];
@@ -1907,6 +2020,7 @@ function populateGenreSelect(){
 
 openAddBookBtn.addEventListener('click', ()=>{
   populateGenreSelect();
+  resetAbSearch();
   addBookOverlay.classList.add('open');
 });
 addBookClose.addEventListener('click', ()=>{ addBookOverlay.classList.remove('open'); });
@@ -1953,7 +2067,8 @@ addBookForm.addEventListener('submit', async (e)=>{
     return;
   }
   const days = Math.round((new Date(end) - new Date(start))/(1000*60*60*24)) + 1;
-  const cover = await fileToDataUri(coverFile);
+  let cover = await fileToDataUri(coverFile);
+  if(!cover && abSelectedCover) cover = abSelectedCover;
 
   // assign color for new genre immediately if needed
   if(!genreColor[genre]){
