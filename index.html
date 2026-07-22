@@ -427,6 +427,29 @@ footer{padding:40px 0 60px; border-top:1px solid var(--line); font-size:12px; co
 .addbook-hint{font-size:11.5px; color:var(--gray-1);}
 .addbook-newgenre{margin-top:8px;}
 
+/* CURRENTLY READING */
+.reading-now-wrap{margin:28px 0;}
+.reading-now-title{font-size:13px; font-weight:800; margin-bottom:12px; color:var(--ink);}
+.reading-now-list{display:grid; grid-template-columns:repeat(auto-fill, minmax(220px,1fr)); gap:14px;}
+.reading-now-card{
+  display:flex; gap:12px; padding:14px; border:1px solid var(--line); border-radius:8px; background:var(--paper);
+}
+.reading-now-cover{width:52px; height:76px; border-radius:4px; flex-shrink:0; object-fit:cover; background:var(--line);}
+.reading-now-cover-fallback{width:52px; height:76px; border-radius:4px; flex-shrink:0; display:flex; align-items:center; justify-content:center;}
+.reading-now-cover-fallback span{font-size:8px; font-weight:700; color:#fff; text-align:center; line-height:1.2; padding:2px;}
+.reading-now-info{min-width:0; flex:1; display:flex; flex-direction:column;}
+.reading-now-info-title{font-size:13.5px; font-weight:700; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.reading-now-info-meta{font-size:11.5px; color:var(--gray-1); margin-top:2px;}
+.reading-now-info-days{font-size:11px; color:var(--gray-1); margin-top:4px; font-weight:600;}
+.reading-now-actions{display:flex; gap:6px; margin-top:auto; padding-top:8px;}
+.reading-now-btn{
+  font-family:'Pretendard',sans-serif; font-size:10.5px; font-weight:700; padding:5px 9px; border-radius:14px;
+  border:1px solid var(--line); background:var(--bg); color:var(--ink-soft); cursor:pointer;
+}
+.reading-now-btn:hover{background:var(--line); color:var(--ink);}
+.reading-now-btn.primary{background:var(--ink); color:#fff; border-color:var(--ink);}
+.reading-now-btn.primary:hover{background:#000;}
+
 /* BOOK SEARCH (Aladin) */
 .ab-search-block{margin-bottom:20px; padding-bottom:18px; border-bottom:1px dashed var(--line);}
 .ab-search-row{display:flex; gap:8px;}
@@ -526,6 +549,11 @@ footer{padding:40px 0 60px; border-top:1px solid var(--line); font-size:12px; co
       <div><b id="heroSaved">–</b><span>원 적립</span></div>
       <div><b id="heroRating">–</b><span>평균 별점</span></div>
     </div>
+  </div>
+
+  <div class="reading-now-wrap" id="readingNowWrap" style="display:none;">
+    <div class="reading-now-title">지금 읽고 있는 책</div>
+    <div class="reading-now-list" id="readingNowList"></div>
   </div>
 
   <div class="data-toolbar">
@@ -721,7 +749,7 @@ footer{padding:40px 0 60px; border-top:1px solid var(--line); font-size:12px; co
 <div class="synopsis-overlay" id="addBookOverlay">
   <div class="synopsis-box addbook-box">
     <button class="synopsis-close" id="addBookClose">✕</button>
-    <h3>책 추가하기</h3>
+    <h3 id="addBookModalTitle">책 추가하기</h3>
 
     <div class="ab-search-block">
       <div class="ab-search-row">
@@ -734,6 +762,7 @@ footer{padding:40px 0 60px; border-top:1px solid var(--line); font-size:12px; co
     <form class="addbook-form" id="addBookForm">
       <div class="addbook-status">
         <label><input type="radio" name="status" value="완독" checked><span>완독</span></label>
+        <label><input type="radio" name="status" value="읽는 중"><span>읽는 중</span></label>
         <label><input type="radio" name="status" value="중단"><span>중단</span></label>
       </div>
       <div>
@@ -768,7 +797,7 @@ footer{padding:40px 0 60px; border-top:1px solid var(--line); font-size:12px; co
           <label for="abStart">시작일</label>
           <input type="date" id="abStart" required>
         </div>
-        <div>
+        <div id="abEndWrap">
           <label for="abEnd">종료일</label>
           <input type="date" id="abEnd" required>
         </div>
@@ -942,6 +971,7 @@ async function storageSet(key, value){
 
 let books = SEED_BOOKS.slice();
 let dropped = SEED_DROPPED.slice();
+let reading = [];
 
 async function renderApp(){
 document.getElementById('coverGrid').innerHTML = '';
@@ -960,6 +990,7 @@ document.getElementById('quoteFilterSelect').innerHTML = '<option value="all">�
 document.getElementById('quoteBookSelect').innerHTML = '';
 document.getElementById('wrapCarousel').innerHTML = '';
 document.getElementById('wrapDots').innerHTML = '';
+document.getElementById('readingNowList').innerHTML = '';
 
 /* ---------------- genre pie chart ---------------- */
 const genreCounts = {};
@@ -1087,6 +1118,49 @@ const genreOrder = Object.keys(genreCounts).sort((a,b)=> genreCounts[b]-genreCou
     <div class="highlight-card"><div class="k">가장 오래 고민한 중단</div><div class="v">${longestDropped ? longestDropped.title : '아직 없음'}</div><div class="d">${longestDropped ? longestDropped.days+'일 붙잡다 결국 중단' : ''}</div></div>
   </div>`;
   insightBox.innerHTML = html;
+})();
+
+/* ---------------- currently reading ---------------- */
+(function buildReadingNow(){
+  const wrap = document.getElementById('readingNowWrap');
+  const list = document.getElementById('readingNowList');
+  if(!reading.length){
+    wrap.style.display = 'none';
+    return;
+  }
+  wrap.style.display = 'block';
+  list.innerHTML = '';
+  const todayMs = new Date().setHours(0,0,0,0);
+  reading.slice().sort((a,b)=> new Date(b.start) - new Date(a.start)).forEach(r=>{
+    const daysSoFar = Math.max(1, Math.round((todayMs - new Date(r.start).setHours(0,0,0,0))/(1000*60*60*24)) + 1);
+    const card = document.createElement('div');
+    card.className = 'reading-now-card';
+    const coverHtml = r.cover
+      ? `<img class="reading-now-cover" src="${r.cover}" alt="${r.title}">`
+      : `<div class="reading-now-cover-fallback" style="background:${genreColor[r.genre]||'#999'}"><span>${r.title}</span></div>`;
+    card.innerHTML = `
+      ${coverHtml}
+      <div class="reading-now-info">
+        <div class="reading-now-info-title">${r.title}</div>
+        <div class="reading-now-info-meta">${r.author} · ${r.genre}</div>
+        <div class="reading-now-info-days">${dstr(r.start)}부터 · ${daysSoFar}일째 읽는 중</div>
+        <div class="reading-now-actions">
+          <button class="reading-now-btn primary" data-no="${r.no}" data-action="finish">완독으로 표시</button>
+          <button class="reading-now-btn" data-no="${r.no}" data-action="drop">중단으로 표시</button>
+        </div>
+      </div>
+    `;
+    list.appendChild(card);
+  });
+  list.querySelectorAll('.reading-now-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const no = Number(btn.dataset.no);
+      const r = reading.find(x=>x.no===no);
+      if(!r) return;
+      if(btn.dataset.action === 'finish') openConvertModal(r, '완독');
+      else openConvertModal(r, '중단');
+    });
+  });
 })();
 
 /* ---------------- legend (shelf) ---------------- */
@@ -1928,7 +2002,7 @@ window.addEventListener('beforeprint', ()=>{
 
 async function ensureGenreColors(){
   const customColors = (await storageGet('customGenreColors')) || {};
-  const allGenres = new Set([...books.map(b=>b.genre), ...dropped.map(d=>d.genre)]);
+  const allGenres = new Set([...books.map(b=>b.genre), ...dropped.map(d=>d.genre), ...reading.map(r=>r.genre)]);
   let changed = false;
   let idx = Object.keys(customColors).length;
   allGenres.forEach(g=>{
@@ -1946,6 +2020,7 @@ async function ensureGenreColors(){
 async function loadAndRenderApp(){
   const savedBooks = await storageGet('allBooks');
   const savedDropped = await storageGet('allDropped');
+  const savedReading = await storageGet('allReading');
   if(savedBooks && Array.isArray(savedBooks) && savedBooks.length){
     books = savedBooks;
   } else {
@@ -1955,6 +2030,11 @@ async function loadAndRenderApp(){
     dropped = savedDropped;
   } else {
     await storageSet('allDropped', dropped);
+  }
+  if(savedReading && Array.isArray(savedReading)){
+    reading = savedReading;
+  } else {
+    await storageSet('allReading', reading);
   }
   await ensureGenreColors();
   await renderApp();
@@ -2065,19 +2145,56 @@ function populateGenreSelect(){
 openAddBookBtn.addEventListener('click', ()=>{
   populateGenreSelect();
   resetAbSearch();
+  abEditContext = null;
+  document.getElementById('addBookModalTitle').textContent = '책 추가하기';
+  document.querySelector('input[name="status"][value="완독"]').checked = true;
+  addBookForm.reset();
+  updateAbFieldsForStatus();
   addBookOverlay.classList.add('open');
 });
-addBookClose.addEventListener('click', ()=>{ addBookOverlay.classList.remove('open'); });
-addBookOverlay.addEventListener('click', (e)=>{ if(e.target === addBookOverlay) addBookOverlay.classList.remove('open'); });
+addBookClose.addEventListener('click', ()=>{ addBookOverlay.classList.remove('open'); abEditContext = null; });
+addBookOverlay.addEventListener('click', (e)=>{ if(e.target === addBookOverlay){ addBookOverlay.classList.remove('open'); abEditContext = null; } });
 
 abGenreSelect.addEventListener('change', ()=>{
   abGenreNew.style.display = abGenreSelect.value === '__new__' ? 'block' : 'none';
 });
+function updateAbFieldsForStatus(){
+  const status = document.querySelector('input[name="status"]:checked').value;
+  abRatingWrap.style.display = status === '완독' ? 'block' : 'none';
+  const endWrap = document.getElementById('abEndWrap');
+  const endInput = document.getElementById('abEnd');
+  if(status === '읽는 중'){
+    endWrap.style.display = 'none';
+    endInput.required = false;
+  } else {
+    endWrap.style.display = 'block';
+    endInput.required = true;
+  }
+}
 addBookForm.querySelectorAll('input[name="status"]').forEach(r=>{
-  r.addEventListener('change', ()=>{
-    abRatingWrap.style.display = document.querySelector('input[name="status"]:checked').value === '완독' ? 'block' : 'none';
-  });
+  r.addEventListener('change', updateAbFieldsForStatus);
 });
+
+let abEditContext = null; // { no } when converting an existing "읽는 중" book
+
+function openConvertModal(readingBook, targetStatus){
+  populateGenreSelect();
+  resetAbSearch();
+  abEditContext = { no: readingBook.no };
+  document.getElementById('addBookModalTitle').textContent =
+    targetStatus === '완독' ? '완독으로 표시하기' : '중단으로 표시하기';
+  document.querySelector(`input[name="status"][value="${targetStatus}"]`).checked = true;
+  document.getElementById('abTitle').value = readingBook.title || '';
+  document.getElementById('abAuthor').value = readingBook.author || '';
+  if([...abGenreSelect.options].some(o=>o.value===readingBook.genre)) abGenreSelect.value = readingBook.genre;
+  document.getElementById('abPages').value = readingBook.pages || '';
+  document.getElementById('abPrice').value = readingBook.price || '';
+  document.getElementById('abStart').value = readingBook.start || '';
+  document.getElementById('abEnd').value = '';
+  document.getElementById('abRating').value = 3;
+  updateAbFieldsForStatus();
+  addBookOverlay.classList.add('open');
+}
 
 function fileToDataUri(file){
   return new Promise((resolve, reject)=>{
@@ -2106,11 +2223,17 @@ addBookForm.addEventListener('submit', async (e)=>{
   const rating = status === '완독' ? parseFloat(document.getElementById('abRating').value) : null;
   const coverFile = document.getElementById('abCover').files[0];
 
-  if(!title || !author || !pages || !start || !end){
+  if(status === '읽는 중'){
+    if(!title || !author || !pages || !start){
+      alert('제목·저자·페이지·시작일은 꼭 입력해주세요.');
+      return;
+    }
+  } else if(!title || !author || !pages || !start || !end){
     alert('제목·저자·페이지·시작일·종료일은 꼭 입력해주세요.');
     return;
   }
-  const days = Math.round((new Date(end) - new Date(start))/(1000*60*60*24)) + 1;
+
+  const days = end ? Math.round((new Date(end) - new Date(start))/(1000*60*60*24)) + 1 : null;
   let cover = await fileToDataUri(coverFile);
   if(!cover && abSelectedCover) cover = abSelectedCover;
 
@@ -2124,13 +2247,24 @@ addBookForm.addEventListener('submit', async (e)=>{
     await storageSet('customGenreColors', customColors);
   }
 
-  const allNos = [...books.map(b=>b.no), ...dropped.map(d=>d.no), 0];
-  const no = Math.max(...allNos) + 1;
   const motif = MOTIFS[Math.floor(Math.random()*MOTIFS.length)];
   const color = genreColor[genre];
   const accent = color;
 
-  const newBook = { no, genre, author, title, pages, start, end, days, color, accent, motif };
+  let no;
+  if(abEditContext){
+    // converting an existing "읽는 중" book into 완독/중단 - keep its no, remove it from reading
+    no = abEditContext.no;
+    const idx = reading.findIndex(r=>r.no===no);
+    if(idx>-1) reading.splice(idx,1);
+    await storageSet('allReading', reading);
+  } else {
+    const allNos = [...books.map(b=>b.no), ...dropped.map(d=>d.no), ...reading.map(r=>r.no), 0];
+    no = Math.max(...allNos) + 1;
+  }
+
+  const newBook = { no, genre, author, title, pages, start, color, accent, motif };
+  if(end) { newBook.end = end; newBook.days = days; }
   if(cover) newBook.cover = cover;
 
   if(status === '완독'){
@@ -2139,6 +2273,10 @@ addBookForm.addEventListener('submit', async (e)=>{
     newBook.price = price;
     books.push(newBook);
     await storageSet('allBooks', books);
+  } else if(status === '읽는 중'){
+    newBook.price = price;
+    reading.push(newBook);
+    await storageSet('allReading', reading);
   } else {
     dropped.push(newBook);
     await storageSet('allDropped', dropped);
@@ -2150,6 +2288,7 @@ addBookForm.addEventListener('submit', async (e)=>{
     await storageSet('customSynopsis', customSynopsis);
   }
 
+  abEditContext = null;
   addBookForm.reset();
   addBookOverlay.classList.remove('open');
   location.reload();
