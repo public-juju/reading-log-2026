@@ -684,6 +684,7 @@ html.dark-mode .synopsis-delete:hover{ background:#3A2222; }
 @media print{ .theme-toggle-btn{ display:none !important; } }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 <nav class="topnav">
@@ -1167,10 +1168,20 @@ function starWidget(rating){
 }
 
 /* ---------------- storage helpers (personal, non-shared) ----------------
-   Tries the Claude artifact storage API first (works when viewed live in
-   claude.ai), and always mirrors to localStorage as a fallback so data
-   still persists when this file is opened as a standalone HTML page. */
+   Priority: Claude artifact storage API (when viewed live in claude.ai) >
+   Supabase (real cross-device sync for the deployed site) > localStorage
+   (fast local cache + offline fallback). Every read/write also updates
+   localStorage so the app still works instantly and offline. */
 const LS_PREFIX = 'rlog2026:';
+const SUPABASE_URL = 'https://ppkhmqsouvfedrtlzovc.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBwa2htcXNvdXZmZWRydGx6b3ZjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ3NzMwMzEsImV4cCI6MjEwMDM0OTAzMX0.nzTcL-PDNk5vhcghqlWDN-c4cNcJtEQgdK4BJCnOgXA';
+let sb = null;
+try{
+  if(window.supabase && window.supabase.createClient){
+    sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  }
+}catch(e){}
+
 async function storageGet(key){
   let cloudVal = null;
   try{
@@ -1179,14 +1190,36 @@ async function storageGet(key){
       if(r && r.value) cloudVal = JSON.parse(r.value);
     }
   }catch(e){}
-  if(cloudVal !== null) return cloudVal;
+  if(cloudVal === null && sb){
+    try{
+      const { data, error } = await sb.from('reading_log_kv').select('value').eq('key', key).maybeSingle();
+      if(!error && data && data.value !== null && data.value !== undefined) cloudVal = data.value;
+    }catch(e){}
+  }
+  if(cloudVal !== null){
+    try{ localStorage.setItem(LS_PREFIX+key, JSON.stringify(cloudVal)); }catch(e){}
+    return cloudVal;
+  }
   try{ const raw = localStorage.getItem(LS_PREFIX+key); return raw ? JSON.parse(raw) : null; }catch(e){ return null; }
 }
 async function storageSet(key, value){
   let ok = false;
   try{ if(window.storage){ await window.storage.set(key, JSON.stringify(value), false); ok = true; } }catch(e){}
+  if(sb){
+    try{
+      const { error } = await sb.from('reading_log_kv').upsert({ key, value, updated_at: new Date().toISOString() });
+      if(!error) ok = true;
+    }catch(e){}
+  }
   try{ localStorage.setItem(LS_PREFIX+key, JSON.stringify(value)); ok = true; }catch(e){}
   return ok;
+}
+async function storageDelete(key){
+  try{ if(window.storage) await window.storage.delete(key, false); }catch(e){}
+  if(sb){
+    try{ await sb.from('reading_log_kv').delete().eq('key', key); }catch(e){}
+  }
+  try{ localStorage.removeItem(LS_PREFIX+key); }catch(e){}
 }
 
 let books = SEED_BOOKS.slice();
@@ -2375,8 +2408,7 @@ document.getElementById('resetBtn').addEventListener('click', async ()=>{
   for(const no of [...SEED_BOOKS.map(b=>b.no), ...SEED_DROPPED.map(d=>d.no)]) keys.push('format:'+no);
   for(let no=1; no<=200; no++) keys.push('format:'+no, 'memo:'+no);
   for(const k of keys){
-    try{ if(window.storage) await window.storage.delete(k, false); }catch(e){}
-    try{ localStorage.removeItem(LS_PREFIX+k); }catch(e){}
+    await storageDelete(k);
   }
   location.reload();
 });
