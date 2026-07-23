@@ -84,7 +84,7 @@ body{font-family:'Pretendard', -apple-system, sans-serif; background:var(--bg); 
 .wrap{max-width:1080px; margin:0 auto; padding:0 24px;}
 
 /* HERO */
-.hero{padding:88px 0 56px; border-bottom:1px solid var(--line);}
+.hero{padding:36px 0 56px; border-bottom:1px solid var(--line);}
 .hero .eyebrow{font-size:13px; letter-spacing:.18em; color:var(--gray-1); font-weight:600; margin-bottom:18px;}
 .hero h1{font-size:clamp(32px,6vw,56px); font-weight:800; letter-spacing:-0.02em; margin-bottom:20px;}
 .hero p{font-size:16px; color:var(--ink-soft); max-width:560px;}
@@ -151,7 +151,9 @@ section{margin:80px 0;}
 /* SORT CONTROLS */
 /* FORMAT SUMMARY */
 .format-summary{display:flex; gap:0; flex-wrap:wrap; border:1px solid var(--line); margin-bottom:20px;}
-.fs-item{flex:1; min-width:110px; display:flex; flex-direction:column; align-items:center; gap:4px; padding:18px 12px; border-right:1px solid var(--line);}
+.fs-item{flex:1; min-width:110px; display:flex; flex-direction:column; align-items:center; gap:4px; padding:18px 12px; border-right:1px solid var(--line); cursor:pointer; border-radius:4px; transition:background .15s ease;}
+.fs-item:hover{background:var(--bg);}
+.fs-item.active{background:var(--accent-rose); border-radius:4px;}
 .fs-item:last-of-type{border-right:none;}
 .fs-icon{font-size:20px;}
 .fs-label{font-size:12px; font-weight:700; color:var(--ink-soft);}
@@ -278,16 +280,16 @@ section{margin:80px 0;}
 .savings-table{width:100%; border-collapse:collapse; font-size:13px;}
 .savings-table th, .savings-table td{padding:10px 14px; text-align:left; white-space:nowrap;}
 .savings-table thead th{
-  font-size:11.5px; font-weight:700; color:var(--gray-1); background:var(--bg);
+  font-size:11.5px; font-weight:800; color:#2F6F4F; background:var(--bg);
   border-bottom:1px solid var(--line); position:sticky; top:0;
 }
 .savings-table tbody tr{border-bottom:1px solid var(--line);}
 .savings-table tbody tr:last-child{border-bottom:none;}
 .savings-table tbody tr:hover{background:var(--bg);}
 .savings-table td:first-child{color:var(--gray-1); font-weight:600; width:44px;}
-.savings-table td:nth-child(2){font-weight:700; color:var(--ink); white-space:normal; min-width:160px;}
+.savings-table td:nth-child(2){color:var(--ink); white-space:normal; min-width:160px;}
 .savings-table td:nth-child(3), .savings-table td:nth-child(4){text-align:right; font-variant-numeric:tabular-nums;}
-.savings-table td:nth-child(4){font-weight:700;}
+.savings-table td.milestone{font-weight:800; color:#2F6F4F;}
 
 /* DROPPED LIST */
 .dropped-list{display:flex; flex-direction:column; gap:14px;}
@@ -437,6 +439,12 @@ footer{padding:40px 0 60px; border-top:1px solid var(--line); font-size:12px; co
   width:28px; height:28px; font-size:13px; cursor:pointer; color:var(--ink-soft);
 }
 .synopsis-close:hover{background:var(--line);}
+.genre-books-list{display:flex; flex-direction:column; gap:10px; margin-top:16px;}
+.genre-book-item{display:flex; justify-content:space-between; gap:10px; padding:10px 0; border-bottom:1px solid var(--line); font-size:14px; cursor:pointer;}
+.genre-book-item:last-child{border-bottom:none;}
+.genre-book-item .gbi-title{font-weight:700;}
+.genre-book-item .gbi-author{color:var(--gray-1); font-size:12.5px; margin-top:2px;}
+.genre-book-item:hover .gbi-title{text-decoration:underline;}
 .synopsis-cover{width:100px; margin:0 auto 16px; border-radius:4px; overflow:hidden; box-shadow:0 4px 14px rgba(0,0,0,.15);}
 .synopsis-cover img{width:100%; display:block;}
 .synopsis-title{font-size:17px; font-weight:800; text-align:center; letter-spacing:-0.01em;}
@@ -707,7 +715,7 @@ html.dark-mode .synopsis-delete:hover{ background:#3A2222; }
       <div><b id="heroSaved">–</b><span>원 적립</span></div>
       <div><b id="heroRating">–</b><span>평균 별점</span></div>
       <div><b id="heroStreak">–</b><span>일 연속 독서 중</span></div>
-      <div><b id="heroLongestStreak">–</b><span>일 최장 스트릭</span></div>
+      <div><b id="heroLongestStreak">–</b><span>최장 연속 독서일</span></div>
     </div>
   </div>
 
@@ -743,10 +751,6 @@ html.dark-mode .synopsis-delete:hover{ background:#3A2222; }
       <svg id="genrePie" width="220" height="220" viewBox="0 0 220 220"></svg>
       <div class="genre-pie-legend" id="genreLegend"></div>
     </div>
-    <div style="margin-top:40px;">
-      <h4 class="split-h">가장 많이 읽은 작가</h4>
-      <div class="genre-list" id="authorStatList"></div>
-    </div>
   </section>
 
   <section id="shelf" class="tab-panel">
@@ -758,7 +762,10 @@ html.dark-mode .synopsis-delete:hover{ background:#3A2222; }
       </div>
     </div>
     <div class="shelf-wrap">
-      <input type="text" id="shelfSearchInput" placeholder="🔍 제목·저자 검색" class="book-search-input" style="margin-bottom:16px;">
+      <div class="sort-bar">
+        <input type="text" id="shelfSearchInput" placeholder="🔍 제목·저자 검색" class="book-search-input">
+        <button class="sort-dir-btn" id="shelfSortBtn">최신순 ↓</button>
+      </div>
       <div class="shelf-row" id="shelfRow"></div>
       <div class="shelf-caption">
         <span id="shelfCaptionCount">완독 – 권 + 중단 – 권 · 최근 읽은 순</span>
@@ -777,10 +784,10 @@ html.dark-mode .synopsis-delete:hover{ background:#3A2222; }
       </div>
     </div>
     <div class="format-summary" id="formatSummary">
-      <div class="fs-item"><span class="fs-icon">📕</span><span class="fs-label">종이책</span><span class="fs-count" id="fsCountPaper">–</span></div>
-      <div class="fs-item"><span class="fs-icon">📱</span><span class="fs-label">e-book</span><span class="fs-count" id="fsCountEbook">–</span></div>
-      <div class="fs-item"><span class="fs-icon">🎧</span><span class="fs-label">오디오북</span><span class="fs-count" id="fsCountAudio">–</span></div>
-      <div class="fs-hint">칩을 눌러 매체를 바꾸면 여기 숫자도 바로 갱신돼요 (중복 선택 가능)</div>
+      <div class="fs-item" data-fmt="종이책"><span class="fs-icon">📕</span><span class="fs-label">종이책</span><span class="fs-count" id="fsCountPaper">–</span></div>
+      <div class="fs-item" data-fmt="전자책"><span class="fs-icon">📱</span><span class="fs-label">e-book</span><span class="fs-count" id="fsCountEbook">–</span></div>
+      <div class="fs-item" data-fmt="오디오북"><span class="fs-icon">🎧</span><span class="fs-label">오디오북</span><span class="fs-count" id="fsCountAudio">–</span></div>
+      <div class="fs-hint">항목을 눌러 매체별로 책장을 필터링해보세요 (다시 누르면 해제)</div>
     </div>
     <div class="sort-bar">
       <input type="text" id="coverSearchInput" placeholder="🔍 제목·저자 검색" class="book-search-input">
@@ -844,7 +851,7 @@ html.dark-mode .synopsis-delete:hover{ background:#3A2222; }
       <div><h2>별점 & 요일 패턴</h2><p class="desc">몇 점을 자주 줬는지, 어떤 요일에 책을 자주 펼쳤는지예요.</p></div>
     </div>
     <div class="split-two">
-      <div><h4 class="split-h">별점 분포</h4><div class="genre-list" id="ratingList"></div></div>
+      <div><h4 class="split-h">별점 분포</h4><div class="genre-list" id="ratingList"></div><div class="genre-books-list" id="ratingDetailList" style="display:none;"></div></div>
       <div><h4 class="split-h">완독 시작 요일</h4><div class="genre-list" id="weekdayList"></div></div>
     </div>
   </section>
@@ -917,6 +924,14 @@ html.dark-mode .synopsis-delete:hover{ background:#3A2222; }
   </section>
 
   <footer>2026 독서 결산 · 페이지·별점·기간·가격은 독서 기록 앱의 실제 데이터를 기반으로 했고, 표지는 직접 올려주신 원본 이미지를 사용했어요. 형식 태그·중단 사유·인상 깊은 문장은 이 화면 안에 저장돼요.</footer>
+</div>
+
+<div class="synopsis-overlay" id="genreBooksOverlay">
+  <div class="synopsis-box" id="genreBooksBox" style="max-width:380px;">
+    <button class="synopsis-close" id="genreBooksClose">✕</button>
+    <div class="synopsis-title" id="genreBooksTitle"></div>
+    <div class="genre-books-list" id="genreBooksList"></div>
+  </div>
 </div>
 
 <div class="synopsis-overlay" id="synopsisOverlay">
@@ -1120,7 +1135,7 @@ const genreColor = {
   "에세이":   "#CDB4DB", // Thistle
   "인문":     "#EFD3D7", // Soft Blush
   "논픽션":   "#B8BEDD", // Periwinkle
-  "자기계발": "#CBC0D3", // Thistle (lavender-gray)
+  "자기계발": "#A8D5BA", // Sage Mist
 };
 // Reserved pastel colors for future genres, in the order given. Use RESERVED_GENRE_COLORS[0]
 // for the next new genre, then [1], [2]... for each one after that.
@@ -1229,9 +1244,36 @@ const genreOrder = Object.keys(genreCounts).sort((a,b)=> genreCounts[b]-genreCou
     const row = document.createElement('div');
     row.className = 'gpl-row';
     row.innerHTML = `<span class="gpl-dot" style="background:${genreColor[g]}"></span>${g} <span class="gpl-pct">${count}권 · ${Math.round(count/total*100)}%</span>`;
+    row.style.cursor = 'pointer';
+    row.addEventListener('click', ()=> openGenreBooksPopup(g));
     legend.appendChild(row);
+
+    path.style.cursor = 'pointer';
+    path.addEventListener('click', ()=> openGenreBooksPopup(g));
   });
 })();
+
+function openGenreBooksPopup(genre){
+  const genreBooks = books.filter(b=>b.genre===genre).sort((a,b)=> new Date(b.end) - new Date(a.end));
+  document.getElementById('genreBooksTitle').textContent = `${genre} · ${genreBooks.length}권`;
+  const listEl = document.getElementById('genreBooksList');
+  listEl.innerHTML = '';
+  genreBooks.forEach(b=>{
+    const item = document.createElement('div');
+    item.className = 'genre-book-item';
+    item.innerHTML = `<div><div class="gbi-title">${b.title}</div><div class="gbi-author">${b.author}</div></div>${starWidget(b.rating)}`;
+    item.addEventListener('click', ()=>{
+      document.getElementById('genreBooksOverlay').classList.remove('open');
+      openSynopsis({...b, kind:'완독'});
+    });
+    listEl.appendChild(item);
+  });
+  document.getElementById('genreBooksOverlay').classList.add('open');
+}
+document.getElementById('genreBooksClose').addEventListener('click', ()=>{ document.getElementById('genreBooksOverlay').classList.remove('open'); });
+document.getElementById('genreBooksOverlay').addEventListener('click', (e)=>{
+  if(e.target.id === 'genreBooksOverlay') e.target.classList.remove('open');
+});
 
 /* ---------------- global stats (hero / stat cards / savings / insight) ---------------- */
 (function buildStats(){
@@ -1508,34 +1550,43 @@ legendEl.appendChild(dashItem);
 
 /* ---------------- shelf (reading order, thickness = pages, title only) ---------------- */
 const shelfRow = document.getElementById('shelfRow');
-const allForShelf = [...books.map(b=>({...b, kind:'완독'})), ...dropped.map(d=>({...d, kind:'중단'}))]
-  .sort((a,b)=> new Date(b.end) - new Date(a.end));
-const minP = Math.min(...allForShelf.map(b=>b.pages));
-const maxP = Math.max(...allForShelf.map(b=>b.pages));
-allForShelf.forEach(b => {
-  const hpx = 26 + (b.pages - minP) / (maxP - minP) * 74; // 26px~100px thickness by page count
-  const pill = document.createElement('div');
-  pill.className = 'pill' + (b.kind === '중단' ? ' dropped' : '');
-  pill.style.height = hpx + 'px';
-  const txt = tagColor(genreColor[b.genre] || '#9A9690');
-  pill.style.background = genreColor[b.genre] || '#9A9690';
-  pill.style.color = txt;
-  const periodStr = b.kind==='중단' ? `${dstr(b.start)} ~ ${dstr(b.end)} 중단` : `${dstr(b.start)} ~ ${dstr(b.end)} · ${b.days}일`;
-  pill.title = `${b.author} · ${b.pages}p · ${periodStr}`;
-  pill.dataset.search = `${b.title} ${b.author}`.toLowerCase();
-  pill.innerHTML = `<div class="pill-title">${b.title}</div>${b.kind==='중단' ? '<span class="pill-dropped-tag">중단</span>' : ''}`;
-  shelfRow.appendChild(pill);
-});
-document.getElementById('shelfSearchInput').addEventListener('input', (e)=>{
-  const q = e.target.value.trim().toLowerCase();
-  shelfRow.querySelectorAll('.pill').forEach(pill=>{
-    pill.style.display = (!q || pill.dataset.search.includes(q)) ? '' : 'none';
+const allForShelfBase = [...books.map(b=>({...b, kind:'완독'})), ...dropped.map(d=>({...d, kind:'중단'}))];
+const minP = Math.min(...allForShelfBase.map(b=>b.pages));
+const maxP = Math.max(...allForShelfBase.map(b=>b.pages));
+let shelfSortOrder = 'newest';
+function renderShelfPills(){
+  shelfRow.innerHTML = '';
+  const mul = shelfSortOrder === 'newest' ? -1 : 1;
+  const allForShelf = [...allForShelfBase].sort((a,b)=> mul*(new Date(a.end) - new Date(b.end)));
+  const q = (document.getElementById('shelfSearchInput').value || '').trim().toLowerCase();
+  allForShelf.forEach(b => {
+    const hpx = 26 + (b.pages - minP) / (maxP - minP) * 74; // 26px~100px thickness by page count
+    const pill = document.createElement('div');
+    pill.className = 'pill' + (b.kind === '중단' ? ' dropped' : '');
+    pill.style.height = hpx + 'px';
+    const txt = tagColor(genreColor[b.genre] || '#9A9690');
+    pill.style.background = genreColor[b.genre] || '#9A9690';
+    pill.style.color = txt;
+    pill.dataset.search = `${b.title} ${b.author}`.toLowerCase();
+    if(q && !pill.dataset.search.includes(q)) pill.style.display = 'none';
+    pill.innerHTML = `<div class="pill-title">${b.title}</div>${b.kind==='중단' ? '<span class="pill-dropped-tag">중단</span>' : ''}`;
+    pill.addEventListener('click', ()=> openSynopsis(b));
+    shelfRow.appendChild(pill);
   });
+}
+renderShelfPills();
+document.getElementById('shelfSearchInput').addEventListener('input', renderShelfPills);
+document.getElementById('shelfSortBtn').addEventListener('click', (e)=>{
+  shelfSortOrder = shelfSortOrder === 'newest' ? 'oldest' : 'newest';
+  e.target.textContent = shelfSortOrder === 'newest' ? '최신순 ↓' : '오래된순 ↑';
+  renderShelfPills();
 });
 
 /* ---------------- cover grid (with sort + dropped included) ---------------- */
 const coverGrid = document.getElementById('coverGrid');
 const allForGrid = [...books.map(b=>({...b, kind:'완독'})), ...dropped.map(d=>({...d, kind:'중단', rating:null, price:null}))];
+let bookFormatMap = {};
+let activeFormatFilter = null;
 
 function renderCoverGrid(field, dir){
   coverGrid.innerHTML = '';
@@ -1543,6 +1594,9 @@ function renderCoverGrid(field, dir){
   const q = (document.getElementById('coverSearchInput').value || '').trim().toLowerCase();
   if(q){
     arr = arr.filter(b => `${b.title} ${b.author}`.toLowerCase().includes(q));
+  }
+  if(activeFormatFilter){
+    arr = arr.filter(b => (bookFormatMap[b.no] || ['종이책']).includes(activeFormatFilter));
   }
   const mul = dir==='asc' ? 1 : -1;
   if(field==='order'){
@@ -1615,7 +1669,9 @@ function renderCoverGrid(field, dir){
           chip.classList.toggle('active');
           const selected = [...fmtWrap.querySelectorAll('.fmt-chip.active')].map(c=>c.dataset.fmt);
           storageSet(`format:${b.no}`, selected);
+          bookFormatMap[b.no] = selected;
           refreshFormatSummary();
+          if(activeFormatFilter) refreshSort();
         });
       });
     }
@@ -1632,6 +1688,7 @@ async function refreshFormatSummary(){
   for(const no of allBookNos){
     const saved = await storageGet(`format:${no}`);
     const formats = (saved && Array.isArray(saved)) ? saved : ["종이책"]; // default chip state
+    bookFormatMap[no] = formats;
     formats.forEach(f=>{ if(counts[f] !== undefined) counts[f]++; });
   }
   document.getElementById('fsCountPaper').textContent = counts["종이책"] + '권';
@@ -1639,6 +1696,17 @@ async function refreshFormatSummary(){
   document.getElementById('fsCountAudio').textContent = counts["오디오북"] + '권';
 }
 refreshFormatSummary();
+
+document.querySelectorAll('#formatSummary .fs-item').forEach(item=>{
+  item.addEventListener('click', ()=>{
+    const fmt = item.dataset.fmt;
+    activeFormatFilter = (activeFormatFilter === fmt) ? null : fmt;
+    document.querySelectorAll('#formatSummary .fs-item').forEach(i=>{
+      i.classList.toggle('active', i.dataset.fmt === activeFormatFilter);
+    });
+    refreshSort();
+  });
+});
 
 /* ---------------- synopsis modal ---------------- */
 const synopsisOverlay = document.getElementById('synopsisOverlay');
@@ -1824,6 +1892,7 @@ monthsList.forEach(monthDate=>{
   const daysInMonth = new Date(y, m+1, 0).getDate();
   const block = document.createElement('div');
   block.className = 'month-block';
+  block.id = `cal-month-${y}-${m}`;
 
   const title = document.createElement('div');
   title.className = 'month-block-title';
@@ -1954,25 +2023,52 @@ monthCounts.forEach((c,i)=>{
   if(i>6) return;
   const col = document.createElement('div');
   col.className = 'month-col';
+  col.style.cursor = 'pointer';
   col.innerHTML = `
     <div class="month-count">${c}</div>
     <div class="month-bar" style="height:${c/maxMonth*100}%; background:${genreColor['국내소설']}"></div>
     <div class="month-label">${i+1}월</div>
   `;
+  col.addEventListener('click', ()=>{
+    const target = document.getElementById(`cal-month-2026-${i}`);
+    if(target) target.scrollIntoView({behavior:'smooth', block:'center'});
+  });
   monthlyList.appendChild(col);
 });
 
 /* ---------------- rating distribution ---------------- */
 const ratingList = document.getElementById('ratingList');
+const ratingDetailList = document.getElementById('ratingDetailList');
 const ratingCounts = {};
 books.forEach(b => { ratingCounts[b.rating] = (ratingCounts[b.rating]||0)+1; });
 const ratingKeys = Object.keys(ratingCounts).map(Number).sort((a,b)=>b-a);
 const maxRatingCount = Math.max(...Object.values(ratingCounts));
+let openRatingKey = null;
 ratingKeys.forEach(r=>{
   const count = ratingCounts[r];
   const row = document.createElement('div');
   row.className = 'genre-row';
+  row.style.cursor = 'pointer';
   row.innerHTML = `<div class="name">${starWidget(r)}</div><div class="bar-track"><div class="bar-fill" style="width:${count/maxRatingCount*100}%; background:var(--accent-rose)"></div></div><div class="count">${count}권</div>`;
+  row.addEventListener('click', ()=>{
+    if(openRatingKey === r){
+      openRatingKey = null;
+      ratingDetailList.style.display = 'none';
+      ratingDetailList.innerHTML = '';
+      return;
+    }
+    openRatingKey = r;
+    const matchedBooks = books.filter(b=>b.rating===r).sort((a,b)=> new Date(b.end) - new Date(a.end));
+    ratingDetailList.innerHTML = '';
+    matchedBooks.forEach(b=>{
+      const item = document.createElement('div');
+      item.className = 'genre-book-item';
+      item.innerHTML = `<div><div class="gbi-title">${b.title}</div><div class="gbi-author">${b.author}</div></div>${starWidget(b.rating)}`;
+      item.addEventListener('click', ()=> openSynopsis({...b, kind:'완독'}));
+      ratingDetailList.appendChild(item);
+    });
+    ratingDetailList.style.display = 'flex';
+  });
   ratingList.appendChild(row);
 });
 
@@ -1988,24 +2084,6 @@ const maxWd = Math.max(...wdCounts, 1);
   row.innerHTML = `<div class="name">${wdNames[idx]}요일</div><div class="bar-track"><div class="bar-fill" style="width:${wdCounts[idx]/maxWd*100}%; background:var(--accent-blue)"></div></div><div class="count">${wdCounts[idx]}권</div>`;
   weekdayList.appendChild(row);
 });
-
-/* ---------------- author stats (가장 많이 읽은 작가) ---------------- */
-const authorStatList = document.getElementById('authorStatList');
-const authorCounts = {};
-books.forEach(b => { if(b.author) authorCounts[b.author] = (authorCounts[b.author]||0)+1; });
-const authorEntries = Object.entries(authorCounts).sort((a,b)=> b[1]-a[1]).slice(0,5);
-if(authorEntries.length){
-  const maxAuthorCount = authorEntries[0][1];
-  authorEntries.forEach(([author, count])=>{
-    const row = document.createElement('div');
-    row.className = 'genre-row';
-    const rereadTag = count > 1 ? ` <span style="color:var(--gray-1); font-weight:500;">(재독 포함)</span>` : '';
-    row.innerHTML = `<div class="name">${author}${rereadTag}</div><div class="bar-track"><div class="bar-fill" style="width:${count/maxAuthorCount*100}%; background:var(--accent-rose)"></div></div><div class="count">${count}권</div>`;
-    authorStatList.appendChild(row);
-  });
-} else {
-  authorStatList.innerHTML = `<div style="color:var(--gray-1); font-size:14px;">아직 완독한 책이 없어요.</div>`;
-}
 
 /* ---------------- savings chart ---------------- */
 const svgNS = "http://www.w3.org/2000/svg";
@@ -2058,14 +2136,18 @@ points.forEach(p=>{
 });
 
 const savingsTableBody = document.getElementById('savingsTableBody');
-savingsTableBody.innerHTML = points.map((p, i)=>`
+savingsTableBody.innerHTML = points.map((p, i)=>{
+  const prevTotal = i>0 ? points[i-1].total : 0;
+  const crossedMilestone = Math.floor(p.total/100000) > Math.floor(prevTotal/100000);
+  return `
   <tr>
     <td>${i+1}</td>
     <td>${p.title}</td>
     <td>${p.price.toLocaleString()}원</td>
-    <td>${p.total.toLocaleString()}원</td>
+    <td${crossedMilestone ? ' class="milestone"' : ''}>${p.total.toLocaleString()}원</td>
   </tr>
-`).join('');
+`;
+}).join('');
 
 /* ---------------- dropped list with memo (view/edit toggle) ---------------- */
 const droppedListEl = document.getElementById('droppedList');
@@ -2474,7 +2556,7 @@ const wishlistEmptyEl = document.getElementById('wishlistEmpty');
 function renderWishlist(){
   wishlistListEl.innerHTML = '';
   wishlistEmptyEl.style.display = wishlist.length ? 'none' : 'block';
-  wishlist.slice().reverse().forEach(w=>{
+  wishlist.slice().forEach(w=>{
     const card = document.createElement('div');
     card.className = 'wishlist-card';
     const metaParts = [w.author, w.genre].filter(Boolean);
@@ -3102,8 +3184,8 @@ loadAndRenderApp();
     let idx = panelOrder.indexOf(currentId);
     if(idx === -1) idx = 0;
     let nextIdx = idx;
-    if(dx < 0 && idx < panelOrder.length - 1) nextIdx = idx + 1; // 왼쪽으로 스와이프 -> 다음 탭
-    else if(dx > 0 && idx > 0) nextIdx = idx - 1; // 오른쪽으로 스와이프 -> 이전 탭
+    if(dx < 0) nextIdx = (idx + 1) % panelOrder.length; // 왼쪽으로 스와이프 -> 다음 탭 (마지막이면 처음으로)
+    else if(dx > 0) nextIdx = (idx - 1 + panelOrder.length) % panelOrder.length; // 오른쪽으로 스와이프 -> 이전 탭 (처음이면 마지막으로)
     if(nextIdx !== idx){
       activateTab(panelOrder[nextIdx]);
       history.replaceState(null, '', '#' + panelOrder[nextIdx]);
