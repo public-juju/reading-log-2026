@@ -2105,7 +2105,7 @@ ratingKeys.forEach(r=>{
       return;
     }
     openRatingKey = r;
-    const matchedBooks = books.filter(b=>b.rating===r).sort((a,b)=> new Date(b.end) - new Date(a.end));
+    const matchedBooks = books.filter(b=>b.rating===r).sort((a,b)=> new Date(a.end) - new Date(b.end));
     ratingDetailList.innerHTML = '';
     matchedBooks.forEach(b=>{
       const item = document.createElement('div');
