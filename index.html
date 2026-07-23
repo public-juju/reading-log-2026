@@ -280,7 +280,7 @@ section{margin:80px 0;}
 .savings-table{width:100%; border-collapse:collapse; font-size:13px;}
 .savings-table th, .savings-table td{padding:10px 14px; text-align:left; white-space:nowrap;}
 .savings-table thead th{
-  font-size:11.5px; font-weight:800; color:#2F6F4F; background:var(--bg);
+  font-size:11.5px; font-weight:800; color:#1B1B1A; background:#DCEEE1;
   border-bottom:1px solid var(--line); position:sticky; top:0;
 }
 .savings-table tbody tr{border-bottom:1px solid var(--line);}
@@ -289,7 +289,7 @@ section{margin:80px 0;}
 .savings-table td:first-child{color:var(--gray-1); font-weight:600; width:44px;}
 .savings-table td:nth-child(2){color:var(--ink); white-space:normal; min-width:160px;}
 .savings-table td:nth-child(3), .savings-table td:nth-child(4){text-align:right; font-variant-numeric:tabular-nums;}
-.savings-table td.milestone{font-weight:800; color:#2F6F4F;}
+.savings-table td.milestone{font-weight:800; color:var(--ink);}
 
 /* DROPPED LIST */
 .dropped-list{display:flex; flex-direction:column; gap:14px;}
@@ -440,10 +440,12 @@ footer{padding:40px 0 60px; border-top:1px solid var(--line); font-size:12px; co
 }
 .synopsis-close:hover{background:var(--line);}
 .genre-books-list{display:flex; flex-direction:column; gap:10px; margin-top:16px;}
-.genre-book-item{display:flex; justify-content:space-between; gap:10px; padding:10px 0; border-bottom:1px solid var(--line); font-size:14px; cursor:pointer;}
+.genre-book-item{display:flex; justify-content:space-between; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid var(--line); font-size:14px; cursor:pointer;}
 .genre-book-item:last-child{border-bottom:none;}
-.genre-book-item .gbi-title{font-weight:700;}
+.genre-book-item .gbi-info{flex:1; min-width:0;}
+.genre-book-item .gbi-title{font-weight:700; overflow-wrap:break-word;}
 .genre-book-item .gbi-author{color:var(--gray-1); font-size:12.5px; margin-top:2px;}
+.genre-book-item .gbi-stars{flex-shrink:0; white-space:nowrap; display:flex; align-items:center; gap:6px;}
 .genre-book-item:hover .gbi-title{text-decoration:underline;}
 .synopsis-cover{width:100px; margin:0 auto 16px; border-radius:4px; overflow:hidden; box-shadow:0 4px 14px rgba(0,0,0,.15);}
 .synopsis-cover img{width:100%; display:block;}
@@ -1261,7 +1263,7 @@ function openGenreBooksPopup(genre){
   genreBooks.forEach(b=>{
     const item = document.createElement('div');
     item.className = 'genre-book-item';
-    item.innerHTML = `<div><div class="gbi-title">${b.title}</div><div class="gbi-author">${b.author}</div></div>${starWidget(b.rating)}`;
+    item.innerHTML = `<div class="gbi-info"><div class="gbi-title">${b.title}</div><div class="gbi-author">${b.author}</div></div><div class="gbi-stars">${starWidget(b.rating)}</div>`;
     item.addEventListener('click', ()=>{
       document.getElementById('genreBooksOverlay').classList.remove('open');
       openSynopsis({...b, kind:'완독'});
@@ -2063,7 +2065,7 @@ ratingKeys.forEach(r=>{
     matchedBooks.forEach(b=>{
       const item = document.createElement('div');
       item.className = 'genre-book-item';
-      item.innerHTML = `<div><div class="gbi-title">${b.title}</div><div class="gbi-author">${b.author}</div></div>${starWidget(b.rating)}`;
+      item.innerHTML = `<div class="gbi-info"><div class="gbi-title">${b.title}</div><div class="gbi-author">${b.author}</div></div><div class="gbi-stars">${starWidget(b.rating)}</div>`;
       item.addEventListener('click', ()=> openSynopsis({...b, kind:'완독'}));
       ratingDetailList.appendChild(item);
     });
