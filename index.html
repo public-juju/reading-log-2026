@@ -748,7 +748,7 @@ html.dark-mode .synopsis-delete:hover{ background:#3A2222; }
   <section id="genre" class="tab-panel">
     <div class="section-head">
       <span class="idx">01</span>
-      <div><h2>장르 분포</h2><p class="desc">완독 <span id="genreDescCount">–</span>권 기준 비중이에요.</p></div>
+      <div><h2>장르 분포</h2><p class="desc">완독 <span id="genreDescCount">–</span>권 기준 비중이에요. 그래프나 항목을 누르면 해당 장르의 책 목록을 볼 수 있어요.</p></div>
     </div>
     <div class="genre-pie-wrap">
       <svg id="genrePie" width="220" height="220" viewBox="0 0 220 220"></svg>
@@ -761,7 +761,7 @@ html.dark-mode .synopsis-delete:hover{ background:#3A2222; }
       <span class="idx">02</span>
       <div>
         <h2>서가 · 쌓아보기</h2>
-        <p class="desc">최근에 읽은 책이 위로 오도록, 읽은 순서의 역순으로 쌓았어요. 두께(높이)가 페이지 분량에 비례하고, 옅게 흐려진 책은 중단한 책이에요. 마우스를 올리면 저자·기간이 떠요.</p>
+        <p class="desc">정렬 버튼으로 최신순·오래된순을 바꿔가며 볼 수 있어요. 두께(높이)가 페이지 분량에 비례하고, 옅게 흐려진 책은 중단한 책이에요. 책을 누르면 저자·기간 등 상세 정보가 팝업으로 떠요.</p>
       </div>
     </div>
     <div class="shelf-wrap">
@@ -794,6 +794,9 @@ html.dark-mode .synopsis-delete:hover{ background:#3A2222; }
     </div>
     <div class="sort-bar">
       <input type="text" id="coverSearchInput" placeholder="🔍 제목·저자 검색" class="book-search-input">
+      <select id="genreFilterSelect">
+        <option value="">전체 장르</option>
+      </select>
       <select id="sortField">
         <option value="order">읽은 순서</option>
         <option value="author">작가</option>
@@ -923,7 +926,7 @@ html.dark-mode .synopsis-delete:hover{ background:#3A2222; }
     </div>
   </section>
 
-  <footer>2026 독서 결산 · 페이지·별점·기간·가격은 독서 기록 앱의 실제 데이터를 기반으로 했고, 표지는 직접 올려주신 원본 이미지를 사용했어요. 형식 태그·중단 사유·인상 깊은 문장은 이 화면 안에 저장돼요.</footer>
+  <footer>2026 독서 결산 · 페이지·별점·기간·가격은 독서 기록 앱의 실제 데이터를 기반으로 했어요. 형식 태그·중단 사유·인상 깊은 문장은 이 화면 안에 저장돼요.</footer>
 </div>
 
 <div class="synopsis-overlay" id="genreBooksOverlay">
@@ -1285,7 +1288,7 @@ const genreOrder = Object.keys(genreCounts).sort((a,b)=> genreCounts[b]-genreCou
 })();
 
 function openGenreBooksPopup(genre){
-  const genreBooks = books.filter(b=>b.genre===genre).sort((a,b)=> new Date(b.end) - new Date(a.end));
+  const genreBooks = books.filter(b=>b.genre===genre).sort((a,b)=> new Date(a.end) - new Date(b.end));
   document.getElementById('genreBooksTitle').textContent = `${genre} · ${genreBooks.length}권`;
   const listEl = document.getElementById('genreBooksList');
   listEl.innerHTML = '';
@@ -1390,12 +1393,14 @@ document.getElementById('genreBooksOverlay').addEventListener('click', (e)=>{
     const avgPrice = Math.round(totalSaved/totalBooks);
     document.getElementById('savAvgValue').textContent = avgPrice.toLocaleString()+'원';
     document.getElementById('savAvgSub').textContent = `${totalSaved.toLocaleString()}원 ÷ ${totalBooks}권`;
-    const maxPriceBook = books.reduce((a,b)=> (b.price||0)>(a.price||0)?b:a, books[0]);
-    const minPriceBook = books.reduce((a,b)=> (b.price||0)<(a.price||0)?b:a, books[0]);
-    document.getElementById('savMaxValue').textContent = maxPriceBook.title;
-    document.getElementById('savMaxSub').textContent = `정가 ${(maxPriceBook.price||0).toLocaleString()}원`;
-    document.getElementById('savMinValue').textContent = minPriceBook.title;
-    document.getElementById('savMinSub').textContent = `정가 ${(minPriceBook.price||0).toLocaleString()}원 · ${minPriceBook.pages}p`;
+    const maxPrice = Math.max(...books.map(b=>b.price||0));
+    const minPrice = Math.min(...books.map(b=>b.price||0));
+    const maxPriceBooks = books.filter(b=>(b.price||0)===maxPrice);
+    const minPriceBooks = books.filter(b=>(b.price||0)===minPrice);
+    document.getElementById('savMaxValue').textContent = maxPriceBooks.map(b=>b.title).join(' · ');
+    document.getElementById('savMaxSub').textContent = `정가 ${maxPrice.toLocaleString()}원`;
+    document.getElementById('savMinValue').textContent = minPriceBooks.map(b=>b.title).join(' · ');
+    document.getElementById('savMinSub').textContent = `정가 ${minPrice.toLocaleString()}원`;
   }
 
   // insight box (auto-generated)
@@ -1626,6 +1631,10 @@ function renderCoverGrid(field, dir){
   if(q){
     arr = arr.filter(b => `${b.title} ${b.author}`.toLowerCase().includes(q));
   }
+  const genreFilter = document.getElementById('genreFilterSelect').value;
+  if(genreFilter){
+    arr = arr.filter(b => b.genre === genreFilter);
+  }
   if(activeFormatFilter){
     arr = arr.filter(b => (bookFormatMap[b.no] || ['종이책']).includes(activeFormatFilter));
   }
@@ -1710,6 +1719,13 @@ function renderCoverGrid(field, dir){
     coverGrid.appendChild(card);
   });
 }
+const genreFilterSelect = document.getElementById('genreFilterSelect');
+[...new Set(allForGrid.map(b=>b.genre))].sort((a,b)=>a.localeCompare(b,'ko')).forEach(g=>{
+  const opt = document.createElement('option');
+  opt.value = g; opt.textContent = g;
+  genreFilterSelect.appendChild(opt);
+});
+genreFilterSelect.addEventListener('change', refreshSort);
 renderCoverGrid('order','asc');
 
 /* ---------------- format summary (paper/ebook/audio counts) ---------------- */
@@ -2133,7 +2149,7 @@ savingsTableBody.innerHTML = points.map((p, i)=>{
     <td>${i+1}</td>
     <td>${p.title}</td>
     <td>${p.price.toLocaleString()}원</td>
-    <td${crossedMilestone ? ' class="milestone"' : ''}>${p.total.toLocaleString()}원</td>
+    <td${crossedMilestone ? ' class="milestone"' : ''}>${crossedMilestone ? '💰 ' : ''}${p.total.toLocaleString()}원</td>
   </tr>
 `;
 }).join('');
