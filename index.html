@@ -3159,8 +3159,8 @@ loadAndRenderApp();
     });
   });
 
-  const initialId = (location.hash ? location.hash.slice(1) : 'home');
-  activateTab(initialId, { skipScrollTop: true });
+  activateTab('home', { skipScrollTop: true });
+  if(location.hash) history.replaceState(null, '', location.pathname + location.search);
 
   window.__activateTab = activateTab;
 
