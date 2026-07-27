@@ -1486,6 +1486,7 @@ function buildReadingNow(){
         </div>
         <div class="reading-now-quote-hint" data-no="${r.no}"></div>
         <div class="reading-now-actions">
+          <button class="reading-now-btn" data-no="${r.no}" data-action="edit">수정하기</button>
           <button class="reading-now-btn primary" data-no="${r.no}" data-action="finish">완독으로 표시</button>
           <button class="reading-now-btn" data-no="${r.no}" data-action="drop">중단으로 표시</button>
         </div>
@@ -1499,7 +1500,8 @@ function buildReadingNow(){
       const r = reading.find(x=>x.no===no);
       if(!r) return;
       if(btn.dataset.action === 'finish') openConvertModal(r, '완독');
-      else openConvertModal(r, '중단');
+      else if(btn.dataset.action === 'drop') openConvertModal(r, '중단');
+      else if(btn.dataset.action === 'edit') openEditBookModal(r, '읽는 중');
     });
   });
   function updateProgressUI(no){
@@ -2844,7 +2846,7 @@ function openEditBookModal(book, currentStatus){
   populateGenreSelect();
   resetAbSearch();
   abSelectedCover = book.cover || null;
-  abEditContext = { no: book.no, sourceStatus: currentStatus };
+  abEditContext = { no: book.no, sourceStatus: currentStatus, progressValue: book.progressValue, progressUnit: book.progressUnit };
   document.getElementById('addBookModalTitle').textContent = '책 정보 수정하기';
   const statusRadio = document.querySelector(`input[name="status"][value="${currentStatus}"]`);
   if(statusRadio) statusRadio.checked = true;
@@ -2975,6 +2977,10 @@ addBookForm.addEventListener('submit', async (e)=>{
     await storageSet('allBooks', books);
   } else if(status === '읽는 중'){
     newBook.price = price;
+    if(abEditContext && abEditContext.sourceStatus === '읽는 중'){
+      if(abEditContext.progressValue != null) newBook.progressValue = abEditContext.progressValue;
+      if(abEditContext.progressUnit != null) newBook.progressUnit = abEditContext.progressUnit;
+    }
     reading.push(newBook);
     await storageSet('allReading', reading);
   } else {
