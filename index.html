@@ -822,7 +822,7 @@ html.dark-mode .synopsis-delete:hover{ background:#3A2222; }
       <span class="idx">05</span>
       <div>
         <h2>완독 타임라인</h2>
-        <p class="desc">1월부터 7월까지, 실제로 책을 붙잡고 있던 기간과 월별 완독 권수예요.</p>
+        <p class="desc">1월부터 12월까지, 실제로 책을 붙잡고 있던 기간과 월별 완독 권수예요.</p>
       </div>
     </div>
     <div class="timeline">
@@ -1884,11 +1884,11 @@ sortDirBtn.addEventListener('click', ()=>{
 
 /* ---------------- timeline ---------------- */
 const tlMonths = document.getElementById('tlMonths');
-["1월","2월","3월","4월","5월","6월","7월"].forEach(m=>{
+["1월","2월","3월","4월","5월","6월","7월","8월","9월","10월","11월","12월"].forEach(m=>{
   const s=document.createElement('span'); s.textContent=m; tlMonths.appendChild(s);
 });
 const yearStart = new Date("2026-01-01").getTime();
-const yearEnd = new Date("2026-07-31").getTime();
+const yearEnd = new Date("2026-12-31").getTime();
 const totalSpan = yearEnd - yearStart;
 const tlBars = document.getElementById('tlBars');
 const timedBooks = [...books.map(b=>({...b, kind:'완독'})), ...dropped.map(d=>({...d, kind:'중단'}))]
@@ -2065,11 +2065,10 @@ heatmapTotal.innerHTML = `<b>${hmTotalReadDays}일</b><span>/ 총 ${hmTotalDays}
 
 /* ---------------- monthly completed book count (vertical bar chart) ---------------- */
 const monthlyList = document.getElementById('monthlyList');
-const monthCounts = [0,0,0,0,0,0,0];
+const monthCounts = Array(12).fill(0);
 books.forEach(b=>{ monthCounts[new Date(b.end).getMonth()]++; });
 const maxMonth = Math.max(...monthCounts,1);
 monthCounts.forEach((c,i)=>{
-  if(i>6) return;
   const col = document.createElement('div');
   col.className = 'month-col';
   col.style.cursor = 'pointer';
