@@ -252,7 +252,14 @@ section{margin:80px 0;}
 .cal-cover-img{width:100%; height:100%; object-fit:cover; display:block;}
 .cal-cover-fallback{width:100%; height:100%; display:flex; align-items:center; justify-content:center; padding:2px;}
 .cal-cover-fallback span{font-size:7px; font-weight:700; color:#fff; text-align:center; line-height:1.2;}
-.cal-cell.is-dropped .cal-cover-img, .cal-cell.is-dropped .cal-cover-fallback{opacity:.4;}
+.cal-cover-img.is-dropped-cover, .cal-cover-fallback.is-dropped-cover{opacity:.4;}
+.cal-diag{position:absolute; inset:0; width:100%; height:100%;}
+.cal-diag-tl{clip-path: polygon(0 0, 100% 0, 0 100%);}
+.cal-diag-br{clip-path: polygon(100% 0, 100% 100%, 0 100%);}
+.cal-diag-line{
+  position:absolute; inset:0; pointer-events:none; z-index:2;
+  background:linear-gradient(135deg, transparent calc(50% - 1px), rgba(255,255,255,.85) calc(50% - 1px), rgba(255,255,255,.85) calc(50% + 1px), transparent calc(50% + 1px));
+}
 .cal-cover-badge{
   position:absolute; top:2px; right:2px; z-index:3; background:rgba(0,0,0,.65); color:#fff;
   font-size:8px; font-weight:800; padding:1px 4px; border-radius:8px; line-height:1.4;
@@ -1987,27 +1994,37 @@ monthsList.forEach(monthDate=>{
     const completedOnDay = findCompleted(ms).map(b=>({...b, kind:'완독'}));
     const droppedOnDay = findDroppedOnDay(ms).map(b=>({...b, kind:'중단'}));
     const dayBooks = [...completedOnDay, ...droppedOnDay];
-    const completedBook = dayBooks[0] || null;
-    const droppedBook = completedBook && completedBook.kind === '중단' ? completedBook : null;
-    const b = completedBook;
+    const b = dayBooks[0] || null;
+    function makeCoverEl(book, extraClass){
+      let el;
+      if(book.cover){
+        el = document.createElement('img');
+        el.className = 'cal-cover-img' + (extraClass ? ' '+extraClass : '');
+        el.src = book.cover;
+        el.alt = book.title;
+      } else {
+        el = document.createElement('div');
+        el.className = 'cal-cover-fallback' + (extraClass ? ' '+extraClass : '');
+        el.style.background = genreColor[book.genre] || '#999';
+        if(!extraClass) el.innerHTML = `<span>${book.title}</span>`;
+      }
+      if(book.kind === '중단') el.classList.add('is-dropped-cover');
+      return el;
+    }
     if(b){
       cell.classList.add('has-cover');
-      if(droppedBook) cell.classList.add('is-dropped');
-      cell.setAttribute('data-label', `${m+1}.${day} · ${b.title}${droppedBook?' (중단)':''}`);
-      if(b.cover){
-        const img = document.createElement('img');
-        img.className = 'cal-cover-img';
-        img.src = b.cover;
-        img.alt = b.title;
-        cell.appendChild(img);
+      cell.setAttribute('data-label', `${m+1}.${day} · ${dayBooks.map(x=>x.title).join(', ')}`);
+      if(dayBooks.length === 1){
+        cell.appendChild(makeCoverEl(b));
+      } else if(dayBooks.length === 2){
+        cell.classList.add('cal-split');
+        cell.appendChild(makeCoverEl(dayBooks[0], 'cal-diag cal-diag-tl'));
+        cell.appendChild(makeCoverEl(dayBooks[1], 'cal-diag cal-diag-br'));
+        const divider = document.createElement('div');
+        divider.className = 'cal-diag-line';
+        cell.appendChild(divider);
       } else {
-        const fb = document.createElement('div');
-        fb.className = 'cal-cover-fallback';
-        fb.style.background = genreColor[b.genre] || '#999';
-        fb.innerHTML = `<span>${b.title}</span>`;
-        cell.appendChild(fb);
-      }
-      if(dayBooks.length > 1){
+        cell.appendChild(makeCoverEl(b));
         const badge = document.createElement('div');
         badge.className = 'cal-cover-badge';
         badge.textContent = `+${dayBooks.length - 1}`;
