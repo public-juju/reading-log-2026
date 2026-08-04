@@ -3175,7 +3175,7 @@ loadAndRenderApp();
   const panelOrder = Array.from(document.querySelectorAll('.tab-panel')).map(p=>p.id);
   const SWIPE_MIN_X = 60;
   const SWIPE_MAX_Y = 80;
-  const SWIPE_EXEMPT_SELECTOR = '.wrap-carousel, .topnav, #abSearchResults, input, textarea, select, .cover-grid';
+  const SWIPE_EXEMPT_SELECTOR = '.wrap-carousel, .topnav, #abSearchResults, input, textarea, select, .cover-grid, .monthly-chart';
   let touchStartX = 0, touchStartY = 0, touchStartTime = 0, touchExempt = false;
   document.addEventListener('touchstart', (e)=>{
     if(e.touches.length !== 1) return;
