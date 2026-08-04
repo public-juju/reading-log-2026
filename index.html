@@ -636,7 +636,7 @@ footer{padding:40px 0 60px; border-top:1px solid var(--line); font-size:12px; co
 .data-toolbar-hint{font-size:12px; color:var(--gray-1); flex-basis:100%;}
 
 @media print{
-  .data-toolbar, .sort-bar, .quote-form, #importFile, .quote-actions, .fab-add, .topnav{ display:none !important; }
+  .data-toolbar, .sort-bar, .quote-form, #importFile, .quote-actions, .fab-add, .topnav, .theme-toggle-btn{ display:none !important; }
   body{background:#fff;}
   section{margin:28px 0; break-inside:avoid;}
   .cover-grid, .quote-grid{ break-inside:avoid; }
@@ -644,6 +644,11 @@ footer{padding:40px 0 60px; border-top:1px solid var(--line); font-size:12px; co
   html{
     --bg:#FFFFFF; --paper:#FFFFFF; --ink:#1B1B1A; --ink-soft:#4E4E4C;
     --gray-1:#8B8B88; --gray-2:#B8B6B1; --line:#E6E7EB;
+  }
+  *{
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
   }
 }
 
@@ -683,7 +688,6 @@ html.dark-mode .synopsis-delete:hover{ background:#3A2222; }
   background:var(--paper); color:var(--ink); border:1px solid var(--line); border-radius:30px;
   padding:14px 16px; cursor:pointer; box-shadow:0 6px 18px rgba(0,0,0,.18);
 }
-@media print{ .theme-toggle-btn{ display:none !important; } }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
