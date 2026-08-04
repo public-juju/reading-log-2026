@@ -253,6 +253,10 @@ section{margin:80px 0;}
 .cal-cover-fallback{width:100%; height:100%; display:flex; align-items:center; justify-content:center; padding:2px;}
 .cal-cover-fallback span{font-size:7px; font-weight:700; color:#fff; text-align:center; line-height:1.2;}
 .cal-cell.is-dropped .cal-cover-img, .cal-cell.is-dropped .cal-cover-fallback{opacity:.4;}
+.cal-cover-badge{
+  position:absolute; top:2px; right:2px; z-index:3; background:rgba(0,0,0,.65); color:#fff;
+  font-size:8px; font-weight:800; padding:1px 4px; border-radius:8px; line-height:1.4;
+}
 .cal-cell:hover::after{
   content:attr(data-label);
   position:absolute; bottom:100%; left:50%; transform:translateX(-50%);
@@ -1293,22 +1297,25 @@ const genreOrder = Object.keys(genreCounts).sort((a,b)=> genreCounts[b]-genreCou
   });
 })();
 
-function openGenreBooksPopup(genre){
-  const genreBooks = books.filter(b=>b.genre===genre).sort((a,b)=> new Date(a.end) - new Date(b.end));
-  document.getElementById('genreBooksTitle').textContent = `${genre} · ${genreBooks.length}권`;
+function openBooksListPopup(title, bookList){
+  document.getElementById('genreBooksTitle').textContent = title;
   const listEl = document.getElementById('genreBooksList');
   listEl.innerHTML = '';
-  genreBooks.forEach(b=>{
+  bookList.forEach(b=>{
     const item = document.createElement('div');
     item.className = 'genre-book-item';
     item.innerHTML = `<div class="gbi-info"><div class="gbi-title">${b.title}</div><div class="gbi-author">${b.author}</div></div><div class="gbi-stars">${starWidget(b.rating)}</div>`;
     item.addEventListener('click', ()=>{
       document.getElementById('genreBooksOverlay').classList.remove('open');
-      openSynopsis({...b, kind:'완독'});
+      openSynopsis(b);
     });
     listEl.appendChild(item);
   });
   document.getElementById('genreBooksOverlay').classList.add('open');
+}
+function openGenreBooksPopup(genre){
+  const genreBooks = books.filter(b=>b.genre===genre).sort((a,b)=> new Date(a.end) - new Date(b.end)).map(b=>({...b, kind:'완독'}));
+  openBooksListPopup(`${genre} · ${genreBooks.length}권`, genreBooks);
 }
 document.getElementById('genreBooksClose').addEventListener('click', ()=>{ document.getElementById('genreBooksOverlay').classList.remove('open'); });
 document.getElementById('genreBooksOverlay').addEventListener('click', (e)=>{
@@ -1922,10 +1929,10 @@ const calendarTotal = document.getElementById('calendarTotal');
 const weekdayLabels = ['일','월','화','수','목','금','토'];
 
 function findCompleted(dateMs){
-  return books.find(b => new Date(b.end).setHours(0,0,0,0) === dateMs);
+  return books.filter(b => new Date(b.end).setHours(0,0,0,0) === dateMs);
 }
 function findDroppedOnDay(dateMs){
-  return dropped.find(d => new Date(d.end).setHours(0,0,0,0) === dateMs);
+  return dropped.filter(d => new Date(d.end).setHours(0,0,0,0) === dateMs);
 }
 
 const allForCal = [...books, ...dropped];
@@ -1977,9 +1984,12 @@ monthsList.forEach(monthDate=>{
     daynum.textContent = day;
     cell.appendChild(daynum);
 
-    const completedBook = findCompleted(ms);
-    const droppedBook = !completedBook ? findDroppedOnDay(ms) : null;
-    const b = completedBook || droppedBook;
+    const completedOnDay = findCompleted(ms).map(b=>({...b, kind:'완독'}));
+    const droppedOnDay = findDroppedOnDay(ms).map(b=>({...b, kind:'중단'}));
+    const dayBooks = [...completedOnDay, ...droppedOnDay];
+    const completedBook = dayBooks[0] || null;
+    const droppedBook = completedBook && completedBook.kind === '중단' ? completedBook : null;
+    const b = completedBook;
     if(b){
       cell.classList.add('has-cover');
       if(droppedBook) cell.classList.add('is-dropped');
@@ -1997,7 +2007,21 @@ monthsList.forEach(monthDate=>{
         fb.innerHTML = `<span>${b.title}</span>`;
         cell.appendChild(fb);
       }
-      monthCount++;
+      if(dayBooks.length > 1){
+        const badge = document.createElement('div');
+        badge.className = 'cal-cover-badge';
+        badge.textContent = `+${dayBooks.length - 1}`;
+        cell.appendChild(badge);
+      }
+      cell.style.cursor = 'pointer';
+      cell.addEventListener('click', ()=>{
+        if(dayBooks.length === 1){
+          openSynopsis(dayBooks[0]);
+        } else {
+          openBooksListPopup(`${m+1}월 ${day}일 · ${dayBooks.length}권`, dayBooks);
+        }
+      });
+      monthCount += dayBooks.length;
     } else {
       cell.setAttribute('data-label', `${m+1}.${day}`);
     }
