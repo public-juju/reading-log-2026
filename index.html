@@ -1309,6 +1309,11 @@ const genreOrder = Object.keys(genreCounts).sort((a,b)=> genreCounts[b]-genreCou
   });
 })();
 
+function formatTitleWithSubtitle(title){
+  const idx = title.indexOf(' - ');
+  if(idx === -1) return title;
+  return title.slice(0, idx) + '<br>' + title.slice(idx+1);
+}
 function openBooksListPopup(title, bookList){
   document.getElementById('genreBooksTitle').textContent = title;
   const listEl = document.getElementById('genreBooksList');
@@ -1316,7 +1321,7 @@ function openBooksListPopup(title, bookList){
   bookList.forEach(b=>{
     const item = document.createElement('div');
     item.className = 'genre-book-item';
-    item.innerHTML = `<div class="gbi-info"><div class="gbi-title">${b.title}</div><div class="gbi-author">${b.author}</div></div><div class="gbi-stars">${starWidget(b.rating)}</div>`;
+    item.innerHTML = `<div class="gbi-info"><div class="gbi-title">${formatTitleWithSubtitle(b.title)}</div><div class="gbi-author">${b.author}</div></div><div class="gbi-stars">${starWidget(b.rating)}</div>`;
     item.addEventListener('click', ()=>{
       document.getElementById('genreBooksOverlay').classList.remove('open');
       openSynopsis(b);
@@ -2173,7 +2178,7 @@ ratingKeys.forEach(r=>{
     matchedBooks.forEach(b=>{
       const item = document.createElement('div');
       item.className = 'genre-book-item';
-      item.innerHTML = `<div class="gbi-info"><div class="gbi-title">${b.title}</div><div class="gbi-author">${b.author}</div></div><div class="gbi-stars">${starWidget(b.rating)}</div>`;
+      item.innerHTML = `<div class="gbi-info"><div class="gbi-title">${formatTitleWithSubtitle(b.title)}</div><div class="gbi-author">${b.author}</div></div><div class="gbi-stars">${starWidget(b.rating)}</div>`;
       item.addEventListener('click', ()=> openSynopsis({...b, kind:'완독'}));
       ratingDetailList.appendChild(item);
     });
