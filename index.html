@@ -1615,7 +1615,11 @@ let shelfSortOrder = 'newest';
 function renderShelfPills(){
   shelfRow.innerHTML = '';
   const mul = shelfSortOrder === 'newest' ? -1 : 1;
-  const allForShelf = [...allForShelfBase].sort((a,b)=> mul*(new Date(a.end) - new Date(b.end)));
+  const allForShelf = [...allForShelfBase].sort((a,b)=> {
+    const dateDiff = new Date(a.end) - new Date(b.end);
+    if(dateDiff !== 0) return mul*dateDiff;
+    return mul*((a.no||0) - (b.no||0));
+  });
   const q = (document.getElementById('shelfSearchInput').value || '').trim().toLowerCase();
   allForShelf.forEach(b => {
     const hpx = 26 + (b.pages - minP) / (maxP - minP) * 74; // 26px~100px thickness by page count
@@ -1662,7 +1666,11 @@ function renderCoverGrid(field, dir){
   }
   const mul = dir==='asc' ? 1 : -1;
   if(field==='order'){
-    arr.sort((a,b)=> mul*(new Date(a.end) - new Date(b.end)));
+    arr.sort((a,b)=> {
+      const dateDiff = new Date(a.end) - new Date(b.end);
+      if(dateDiff !== 0) return mul*dateDiff;
+      return mul*((a.no||0) - (b.no||0));
+    });
   } else if(field==='author'){
     arr.sort((a,b)=> mul*a.author.localeCompare(b.author,'ko'));
   } else if(field==='title'){
