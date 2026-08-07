@@ -97,8 +97,6 @@ body{font-family:'Pretendard', -apple-system, sans-serif; background:var(--bg); 
 .stat-card{background:var(--paper); padding:26px 22px;}
 .stat-card .label{font-size:12.5px; color:var(--gray-1); font-weight:600; margin-bottom:10px;}
 .stat-card .value{font-size:22px; font-weight:800; letter-spacing:-0.01em;}
-.stat-card .value.value-sm{font-size:16px; line-height:1.35;}
-.stat-card .value.value-xs{font-size:13px; font-weight:700; line-height:1.5;}
 .stat-card .sub{font-size:12px; color:var(--gray-1); margin-top:6px;}
 @media (max-width:720px){.stats{grid-template-columns:repeat(2,1fr);}}
 
@@ -759,7 +757,7 @@ html.dark-mode .synopsis-delete:hover{ background:#3A2222; }
     <div class="stat-card"><div class="label">최다 장르</div><div class="value" id="statTopGenre">–</div><div class="sub" id="statTopGenreSub">–</div></div>
     <div class="stat-card"><div class="label">가장 빨리 끝낸 책</div><div class="value" id="statShortest">–</div><div class="sub" id="statShortestSub">–</div></div>
     <div class="stat-card"><div class="label" id="statTopRatedLabel">최고 평점</div><div class="value" id="statTopRated">–</div><div class="sub" id="statTopRatedSub">–</div></div>
-    <div class="stat-card"><div class="label">최저 평점</div><div class="value" id="statLowRated">–</div><div class="sub">완독은 했지만 아쉬웠던 책</div></div>
+    <div class="stat-card"><div class="label">최저 평점</div><div class="value" id="statLowRated">–</div><div class="sub" id="statLowRatedSub">–</div></div>
   </div>
 
   </section>
@@ -1389,20 +1387,12 @@ document.getElementById('genreBooksOverlay').addEventListener('click', (e)=>{
   document.getElementById('statTopGenre').textContent = topGenre;
   document.getElementById('statTopGenreSub').textContent = `${genreCounts[topGenre]||0}권 · ${topGenrePct}%`;
 
-  function fitStatValue(el, count){
-    el.classList.remove('value-sm','value-xs');
-    if(count >= 6) el.classList.add('value-xs');
-    else if(count >= 3) el.classList.add('value-sm');
-  }
-
   // shortest book (fewest days to finish, showing all ties)
   if(books.length){
     const minDays = Math.min(...books.map(b=>b.days));
     const shortestBooks = books.filter(b=>b.days===minDays);
-    const statShortestEl = document.getElementById('statShortest');
-    statShortestEl.textContent = shortestBooks.map(b=>b.title).join(' · ');
-    fitStatValue(statShortestEl, shortestBooks.length);
-    document.getElementById('statShortestSub').textContent = `${minDays}일 만에 완독${minDays===1 ? ' · 하루 완독' : ''}`;
+    document.getElementById('statShortest').textContent = `${minDays}일`;
+    document.getElementById('statShortestSub').textContent = `${shortestBooks.map(b=>b.title).join(' · ')}${minDays===1 ? ' · 하루 완독' : ''}`;
   }
 
   // top / bottom rated
@@ -1414,9 +1404,8 @@ document.getElementById('genreBooksOverlay').addEventListener('click', (e)=>{
     document.getElementById('statTopRatedLabel').textContent = `최고 평점 · ${topList.length}권`;
     document.getElementById('statTopRated').textContent = `★${maxR.toFixed(1)}`;
     document.getElementById('statTopRatedSub').textContent = topList.map(b=>b.title).join(' · ');
-    const statLowRatedEl = document.getElementById('statLowRated');
-    statLowRatedEl.textContent = `${lowList.map(b=>b.title).join(' · ')} · ★${minR.toFixed(1)}`;
-    fitStatValue(statLowRatedEl, lowList.length);
+    document.getElementById('statLowRated').textContent = `★${minR.toFixed(1)}`;
+    document.getElementById('statLowRatedSub').textContent = lowList.map(b=>b.title).join(' · ');
   }
 
   // savings cards
@@ -1430,14 +1419,10 @@ document.getElementById('genreBooksOverlay').addEventListener('click', (e)=>{
     const minPrice = Math.min(...books.map(b=>b.price||0));
     const maxPriceBooks = books.filter(b=>(b.price||0)===maxPrice);
     const minPriceBooks = books.filter(b=>(b.price||0)===minPrice);
-    const savMaxValueEl = document.getElementById('savMaxValue');
-    savMaxValueEl.textContent = maxPriceBooks.map(b=>b.title).join(' · ');
-    fitStatValue(savMaxValueEl, maxPriceBooks.length);
-    document.getElementById('savMaxSub').textContent = `정가 ${maxPrice.toLocaleString()}원`;
-    const savMinValueEl = document.getElementById('savMinValue');
-    savMinValueEl.textContent = minPriceBooks.map(b=>b.title).join(' · ');
-    fitStatValue(savMinValueEl, minPriceBooks.length);
-    document.getElementById('savMinSub').textContent = `정가 ${minPrice.toLocaleString()}원`;
+    document.getElementById('savMaxValue').textContent = `${maxPrice.toLocaleString()}원`;
+    document.getElementById('savMaxSub').textContent = maxPriceBooks.map(b=>b.title).join(' · ');
+    document.getElementById('savMinValue').textContent = `${minPrice.toLocaleString()}원`;
+    document.getElementById('savMinSub').textContent = minPriceBooks.map(b=>b.title).join(' · ');
   }
 
   // insight box (auto-generated)
