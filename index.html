@@ -755,7 +755,7 @@ html.dark-mode .synopsis-delete:hover{ background:#3A2222; }
 
   <div class="stats">
     <div class="stat-card"><div class="label">최다 장르</div><div class="value" id="statTopGenre">–</div><div class="sub" id="statTopGenreSub">–</div></div>
-    <div class="stat-card"><div class="label">가장 짧게 끝낸 책</div><div class="value" id="statShortest">–</div><div class="sub" id="statShortestSub">–</div></div>
+    <div class="stat-card"><div class="label">가장 빨리 끝낸 책</div><div class="value" id="statShortest">–</div><div class="sub" id="statShortestSub">–</div></div>
     <div class="stat-card"><div class="label" id="statTopRatedLabel">최고 평점</div><div class="value" id="statTopRated">–</div><div class="sub" id="statTopRatedSub">–</div></div>
     <div class="stat-card"><div class="label">최저 평점</div><div class="value" id="statLowRated">–</div><div class="sub">완독은 했지만 아쉬웠던 책</div></div>
   </div>
@@ -1387,11 +1387,12 @@ document.getElementById('genreBooksOverlay').addEventListener('click', (e)=>{
   document.getElementById('statTopGenre').textContent = topGenre;
   document.getElementById('statTopGenreSub').textContent = `${genreCounts[topGenre]||0}권 · ${topGenrePct}%`;
 
-  // shortest book
+  // shortest book (fewest days to finish, showing all ties)
   if(books.length){
-    const shortest = books.reduce((a,b)=> b.pages<a.pages?b:a, books[0]);
-    document.getElementById('statShortest').textContent = shortest.title;
-    document.getElementById('statShortestSub').textContent = `${shortest.pages}p · ${shortest.author}${shortest.days===1?' · 하루 완독':''}`;
+    const minDays = Math.min(...books.map(b=>b.days));
+    const shortestBooks = books.filter(b=>b.days===minDays);
+    document.getElementById('statShortest').textContent = shortestBooks.map(b=>b.title).join(' · ');
+    document.getElementById('statShortestSub').textContent = `${minDays}일 만에 완독${minDays===1 ? ' · 하루 완독' : ''}`;
   }
 
   // top / bottom rated
