@@ -137,7 +137,6 @@ section{margin:80px 0;}
 .pill:hover{filter:brightness(1.05); z-index:5;}
 .pill.dropped{
   opacity:.45;
-  background-image:none !important;
   border:none;
 }
 .pill .pill-title{
@@ -781,7 +780,7 @@ html.dark-mode .synopsis-delete:hover{ background:#3A2222; }
       <span class="idx">02</span>
       <div>
         <h2>서가 · 쌓아보기</h2>
-        <p class="desc">정렬 버튼으로 최신순·오래된순을 바꿔가며 볼 수 있어요. 두께(높이)가 페이지 분량에 비례하고, 옅게 흐려진 책은 중단한 책이에요. 책을 누르면 저자·기간 등 상세 정보가 팝업으로 떠요.</p>
+        <p class="desc">정렬 버튼으로 최신순·오래된순을 바꿔가며 볼 수 있어요. 두께(높이)가 페이지 분량에 비례하고, 옅게 흐려진 책은 중단한 책이에요. 책등 이미지를 올리면 실제 책등이, 없으면 장르 색 블록이 보여요. 책을 누르면 저자·기간 등 상세 정보가 팝업으로 떠요.</p>
       </div>
     </div>
     <div class="shelf-wrap">
@@ -1053,6 +1052,10 @@ html.dark-mode .synopsis-delete:hover{ background:#3A2222; }
       <div>
         <label for="abCover">표지 이미지 (선택)</label>
         <input type="file" id="abCover" accept="image/*" class="addbook-file">
+      </div>
+      <div>
+        <label for="abSpine">책등 이미지 (선택) — 서가 탭에 사용돼요</label>
+        <input type="file" id="abSpine" accept="image/*" class="addbook-file">
       </div>
       <div class="addbook-hint">저장하면 통계·서가·차트·랩업 카드가 전부 자동으로 다시 계산돼요.</div>
       <button type="submit" class="addbook-submit">책 추가하기</button>
@@ -1636,14 +1639,19 @@ function renderShelfPills(){
   allForShelf.forEach(b => {
     const hpx = 26 + (b.pages - minP) / (maxP - minP) * 74; // 26px~100px thickness by page count
     const pill = document.createElement('div');
-    pill.className = 'pill' + (b.kind === '중단' ? ' dropped' : '');
+    pill.className = 'pill' + (b.kind === '중단' ? ' dropped' : '') + (b.spine ? ' has-spine' : '');
     pill.style.height = hpx + 'px';
-    const txt = tagColor(genreColor[b.genre] || '#9A9690');
-    pill.style.background = genreColor[b.genre] || '#9A9690';
-    pill.style.color = txt;
     pill.dataset.search = `${b.title} ${b.author}`.toLowerCase();
     if(q && !pill.dataset.search.includes(q)) pill.style.display = 'none';
-    pill.innerHTML = `<div class="pill-title">${b.title}</div>${b.kind==='중단' ? '<span class="pill-dropped-tag">중단</span>' : ''}`;
+    if(b.spine){
+      pill.style.background = `url('${b.spine}') center/cover`;
+      pill.innerHTML = b.kind==='중단' ? '<span class="pill-dropped-tag">중단</span>' : '';
+    } else {
+      const txt = tagColor(genreColor[b.genre] || '#9A9690');
+      pill.style.background = genreColor[b.genre] || '#9A9690';
+      pill.style.color = txt;
+      pill.innerHTML = `<div class="pill-title">${b.title}</div>${b.kind==='중단' ? '<span class="pill-dropped-tag">중단</span>' : ''}`;
+    }
     pill.addEventListener('click', ()=> openSynopsis(b));
     shelfRow.appendChild(pill);
   });
@@ -2716,6 +2724,7 @@ const abGenreNew = document.getElementById('abGenreNew');
 const abRatingWrap = document.getElementById('abRatingWrap');
 const MOTIFS = ['circle','blob','stripe','scribble'];
 let abSelectedCover = null;
+let abSelectedSpine = null;
 let abSelectedSynopsis = null;
 
 function guessGenreFromCategory(categoryName){
@@ -2733,6 +2742,7 @@ function resetAbSearch(){
   document.getElementById('abSearchInput').value = '';
   document.getElementById('abSearchResults').innerHTML = '';
   abSelectedCover = null;
+  abSelectedSpine = null;
   abSelectedSynopsis = null;
 }
 
@@ -2869,6 +2879,7 @@ function openWishlistConvertModal(item, targetStatus){
   populateGenreSelect();
   resetAbSearch();
   abSelectedCover = item.cover || null;
+  abSelectedSpine = item.spine || null;
   abEditContext = null;
   abConvertFromWishlistId = item.id;
   document.getElementById('addBookModalTitle').textContent =
@@ -2891,6 +2902,7 @@ function openConvertModal(readingBook, targetStatus){
   populateGenreSelect();
   resetAbSearch();
   abSelectedCover = readingBook.cover || null;
+  abSelectedSpine = readingBook.spine || null;
   abEditContext = { no: readingBook.no, sourceStatus: '읽는 중' };
   document.getElementById('addBookModalTitle').textContent =
     targetStatus === '완독' ? '완독으로 표시하기' : '중단으로 표시하기';
@@ -2912,6 +2924,7 @@ function openEditBookModal(book, currentStatus){
   populateGenreSelect();
   resetAbSearch();
   abSelectedCover = book.cover || null;
+  abSelectedSpine = book.spine || null;
   abEditContext = { no: book.no, sourceStatus: currentStatus, progressValue: book.progressValue, progressUnit: book.progressUnit };
   document.getElementById('addBookModalTitle').textContent = '책 정보 수정하기';
   const statusRadio = document.querySelector(`input[name="status"][value="${currentStatus}"]`);
@@ -2993,6 +3006,8 @@ addBookForm.addEventListener('submit', async (e)=>{
   const days = end ? Math.round((new Date(end) - new Date(start))/(1000*60*60*24)) + 1 : null;
   let cover = await fileToDataUri(coverFile);
   if(!cover && abSelectedCover) cover = abSelectedCover;
+  let spine = await fileToDataUri(document.getElementById('abSpine').files[0]);
+  if(!spine && abSelectedSpine) spine = abSelectedSpine;
 
   // assign color for new genre immediately if needed
   if(!genreColor[genre]){
@@ -3033,6 +3048,7 @@ addBookForm.addEventListener('submit', async (e)=>{
   const newBook = { no, genre, author, title, pages, start, color, accent, motif };
   if(end) { newBook.end = end; newBook.days = days; }
   if(cover) newBook.cover = cover;
+  if(spine) newBook.spine = spine;
 
   if(status === '완독'){
     newBook.rating = rating;
