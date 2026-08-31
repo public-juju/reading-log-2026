@@ -1656,8 +1656,13 @@ legendEl.appendChild(dashItem);
 /* ---------------- shelf (reading order, thickness = pages, title only) ---------------- */
 const shelfRow = document.getElementById('shelfRow');
 const allForShelfBase = [...books.map(b=>({...b, kind:'완독'})), ...dropped.map(d=>({...d, kind:'중단'}))];
-const minP = Math.min(...allForShelfBase.map(b=>b.pages));
-const maxP = Math.max(...allForShelfBase.map(b=>b.pages));
+const minP = Math.min(...allForShelfBase.map(b=>Number(b.pages)||0).filter(p=>p>0));
+const maxP = Math.max(...allForShelfBase.map(b=>Number(b.pages)||0).filter(p=>p>0));
+function pillThicknessPx(b){
+  const pages = Number(b.pages) || minP || 200;
+  const range = (maxP - minP) || 1;
+  return 26 + Math.max(0, Math.min(1, (pages - minP) / range)) * 74; // clamp 26px~100px
+}
 let shelfSortOrder = 'newest';
 function fillColorPill(pill, b){
   const droppedTag = b.kind==='중단' ? '<span class="pill-dropped-tag">중단</span>' : '';
@@ -1684,7 +1689,7 @@ function renderShelfPills(){
   });
   const q = (document.getElementById('shelfSearchInput').value || '').trim().toLowerCase();
   allForShelf.forEach(b => {
-    const hpx = 26 + (b.pages - minP) / (maxP - minP) * 74; // 26px~100px thickness by page count
+    const hpx = pillThicknessPx(b); // 26px~100px thickness by page count
     const pill = document.createElement('div');
     pill.className = 'pill' + (b.kind === '중단' ? ' dropped' : '');
     pill.style.height = hpx + 'px';
@@ -1721,7 +1726,7 @@ function renderSpineShelfPills(){
     return;
   }
   allForSpineShelf.forEach(b => {
-    const hpx = 26 + (b.pages - minP) / (maxP - minP) * 74;
+    const hpx = pillThicknessPx(b);
     const pill = document.createElement('div');
     pill.className = 'pill has-spine' + (b.kind === '중단' ? ' dropped' : '');
     pill.style.height = hpx + 'px';
