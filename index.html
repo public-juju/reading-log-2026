@@ -140,10 +140,10 @@ section{margin:80px 0;}
 #spineShelfRow .pill:first-child{border-radius:10px 10px 0 0;}
 #spineShelfRow .pill:last-child{border-radius:0 0 10px 10px;}
 #spineShelfRow .pill:only-child{border-radius:10px;}
-.pill.has-spine{padding:0; background:var(--bg);}
+.pill.has-spine{padding:0; background:var(--bg); overflow:hidden;}
 .pill .spine-img{
-  display:block; flex-shrink:0; object-fit:contain; object-position:top;
-  transform:rotate(-90deg);
+  display:block; position:absolute; top:0; left:0;
+  transform-origin:0 0;
 }
 .pill:hover{filter:brightness(1.05); z-index:5;}
 .pill.dropped{
@@ -1678,10 +1678,13 @@ function fillColorPill(pill, b){
 }
 function fillSpinePill(pill, b, hpx, rowWidthPx){
   const droppedTag = b.kind==='중단' ? '<span class="pill-dropped-tag">중단</span>' : '';
-  // spine photos are tall & narrow (portrait). Lay the pill's box out
-  // pre-rotation as narrow(hpx) x tall(rowWidthPx), then rotate -90deg
-  // so the full spine image reads left-to-right inside the short wide pill.
-  pill.innerHTML = `<img class="spine-img" src="${b.spine}" alt="${b.title}" style="width:${hpx}px; height:${rowWidthPx}px;">${droppedTag}`;
+  // Spine photos are tall & narrow (portrait). Pre-rotation the image is laid
+  // out narrow(hpx) x auto (its own natural aspect ratio, so length isn't
+  // stretched or cropped). Rotating -90deg around its own top-left corner
+  // swaps those axes; translateY(hpx) then shifts the rotated box back down
+  // so it's flush against the pill's left edge instead of floating above it.
+  // Natural length can be shorter or longer than the row — that's expected.
+  pill.innerHTML = `<img class="spine-img" src="${b.spine}" alt="${b.title}" style="width:${hpx}px; height:auto; transform:translateY(${hpx}px) rotate(-90deg);">${droppedTag}`;
 }
 
 function renderShelfPills(){
