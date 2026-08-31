@@ -780,7 +780,7 @@ html.dark-mode .synopsis-delete:hover{ background:#3A2222; }
       <span class="idx">02</span>
       <div>
         <h2>서가 · 쌓아보기</h2>
-        <p class="desc">정렬 버튼으로 최신순·오래된순을 바꿔가며 볼 수 있어요. 두께(높이)가 페이지 분량에 비례하고, 옅게 흐려진 책은 중단한 책이에요. 책등 이미지를 올리면 실제 책등이, 없으면 장르 색 블록이 보여요. 책을 누르면 저자·기간 등 상세 정보가 팝업으로 떠요.</p>
+        <p class="desc">정렬 버튼으로 최신순·오래된순을 바꿔가며 볼 수 있어요. 두께(높이)가 페이지 분량에 비례하고, 옅게 흐려진 책은 중단한 책이에요. 책등 이미지를 올리면 실제 책등이, 표지만 있으면 표지 색을 반영한 색상이, 둘 다 없으면 장르 색 블록이 보여요. 책을 누르면 저자·기간 등 상세 정보가 팝업으로 떠요.</p>
       </div>
     </div>
     <div class="shelf-wrap">
@@ -1188,6 +1188,33 @@ function tagColor(bg){
   const r=parseInt(c.substr(0,2),16), g=parseInt(c.substr(2,2),16), b=parseInt(c.substr(4,2),16);
   const lum = (0.299*r+0.587*g+0.114*b);
   return lum > 170 ? '#1a1a1a' : '#ffffff';
+}
+const dominantColorCache = {};
+function sampleDominantColorHex(imgSrc){
+  if(dominantColorCache[imgSrc]) return Promise.resolve(dominantColorCache[imgSrc]);
+  return new Promise((resolve)=>{
+    const img = new Image();
+    img.onload = ()=>{
+      try{
+        const size = 12;
+        const canvas = document.createElement('canvas');
+        canvas.width = size; canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, size, size);
+        const data = ctx.getImageData(0,0,size,size).data;
+        let r=0,g=0,b=0,count=0;
+        for(let i=0;i<data.length;i+=4){
+          r+=data[i]; g+=data[i+1]; b+=data[i+2]; count++;
+        }
+        r=Math.round(r/count); g=Math.round(g/count); b=Math.round(b/count);
+        const hex = '#'+[r,g,b].map(v=>v.toString(16).padStart(2,'0')).join('');
+        dominantColorCache[imgSrc] = hex;
+        resolve(hex);
+      }catch(e){ resolve(null); }
+    };
+    img.onerror = ()=> resolve(null);
+    img.src = imgSrc;
+  });
 }
 function starWidget(rating){
   if(rating===null) return `<span class="star-num">별점 없음</span>`;
@@ -1646,6 +1673,19 @@ function renderShelfPills(){
     if(b.spine){
       pill.style.background = `url('${b.spine}') center/cover`;
       pill.innerHTML = b.kind==='중단' ? '<span class="pill-dropped-tag">중단</span>' : '';
+    } else if(b.cover){
+      // show a genre-color placeholder immediately, then swap in an
+      // auto-generated pseudo-spine (dominant cover color + vertical title)
+      const txt = tagColor(genreColor[b.genre] || '#9A9690');
+      pill.style.background = genreColor[b.genre] || '#9A9690';
+      pill.style.color = txt;
+      pill.innerHTML = `<div class="pill-title">${b.title}</div>${b.kind==='중단' ? '<span class="pill-dropped-tag">중단</span>' : ''}`;
+      sampleDominantColorHex(b.cover).then(hex=>{
+        if(!hex) return;
+        pill.classList.add('auto-spine');
+        pill.style.background = hex;
+        pill.style.color = tagColor(hex);
+      });
     } else {
       const txt = tagColor(genreColor[b.genre] || '#9A9690');
       pill.style.background = genreColor[b.genre] || '#9A9690';
