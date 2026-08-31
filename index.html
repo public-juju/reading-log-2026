@@ -719,6 +719,7 @@ html.dark-mode .synopsis-delete:hover{ background:#3A2222; }
     <a href="#dropped"><b>08</b>중단</a>
     <a href="#quotes"><b>09</b>문장</a>
     <a href="#insight"><b>10</b>인사이트</a>
+    <a href="#spineshelf"><b>11</b>책등 서가</a>
   </div>
 </nav>
 <button id="openAddBookBtn" class="fab-add">+ 책 추가</button>
@@ -942,6 +943,26 @@ html.dark-mode .synopsis-delete:hover{ background:#3A2222; }
       <h4 class="split-h">지금까지의 랩업 카드</h4>
       <div class="wrap-carousel" id="wrapCarousel"></div>
       <div class="wrap-dots" id="wrapDots"></div>
+    </div>
+  </section>
+
+  <section id="spineshelf" class="tab-panel">
+    <div class="section-head">
+      <span class="idx">11</span>
+      <div>
+        <h2>책등 서가</h2>
+        <p class="desc">책등 이미지를 올린 책은 실제 책등으로, 못 올린 책은 장르 색 블록으로 보여요. 두께(높이)는 페이지 분량에 비례해요. 정렬 버튼으로 읽은 순서를 오름차순·내림차순으로 바꿔볼 수 있어요.</p>
+      </div>
+    </div>
+    <div class="shelf-wrap">
+      <div class="sort-bar">
+        <input type="text" id="spineShelfSearchInput" placeholder="🔍 제목·저자 검색" class="book-search-input">
+        <button class="sort-dir-btn" id="spineShelfSortBtn" data-dir="asc">오름차순 ↑</button>
+      </div>
+      <div class="shelf-row" id="spineShelfRow"></div>
+      <div class="shelf-caption">
+        <span>흐린 색 = 중단한 책</span>
+      </div>
     </div>
   </section>
 
@@ -1662,6 +1683,46 @@ document.getElementById('shelfSortBtn').addEventListener('click', (e)=>{
   shelfSortOrder = shelfSortOrder === 'newest' ? 'oldest' : 'newest';
   e.target.textContent = shelfSortOrder === 'newest' ? '최신순 ↓' : '오래된순 ↑';
   renderShelfPills();
+});
+
+/* ---------------- spine shelf (11) — same stacking, sorted asc/desc by reading order ---------------- */
+const spineShelfRow = document.getElementById('spineShelfRow');
+let spineShelfSortDir = 'asc';
+function renderSpineShelfPills(){
+  spineShelfRow.innerHTML = '';
+  const mul = spineShelfSortDir === 'asc' ? 1 : -1;
+  const allForSpineShelf = [...allForShelfBase].sort((a,b)=> {
+    const dateDiff = new Date(a.end) - new Date(b.end);
+    if(dateDiff !== 0) return mul*dateDiff;
+    return mul*((a.no||0) - (b.no||0));
+  });
+  const q = (document.getElementById('spineShelfSearchInput').value || '').trim().toLowerCase();
+  allForSpineShelf.forEach(b => {
+    const hpx = 26 + (b.pages - minP) / (maxP - minP) * 74;
+    const pill = document.createElement('div');
+    pill.className = 'pill' + (b.kind === '중단' ? ' dropped' : '') + (b.spine ? ' has-spine' : '');
+    pill.style.height = hpx + 'px';
+    pill.dataset.search = `${b.title} ${b.author}`.toLowerCase();
+    if(q && !pill.dataset.search.includes(q)) pill.style.display = 'none';
+    if(b.spine){
+      pill.style.background = `url('${b.spine}') center/cover`;
+      pill.innerHTML = b.kind==='중단' ? '<span class="pill-dropped-tag">중단</span>' : '';
+    } else {
+      const txt = tagColor(genreColor[b.genre] || '#9A9690');
+      pill.style.background = genreColor[b.genre] || '#9A9690';
+      pill.style.color = txt;
+      pill.innerHTML = `<div class="pill-title">${b.title}</div>${b.kind==='중단' ? '<span class="pill-dropped-tag">중단</span>' : ''}`;
+    }
+    pill.addEventListener('click', ()=> openSynopsis(b));
+    spineShelfRow.appendChild(pill);
+  });
+}
+renderSpineShelfPills();
+document.getElementById('spineShelfSearchInput').addEventListener('input', renderSpineShelfPills);
+document.getElementById('spineShelfSortBtn').addEventListener('click', (e)=>{
+  spineShelfSortDir = spineShelfSortDir === 'asc' ? 'desc' : 'asc';
+  e.target.textContent = spineShelfSortDir === 'asc' ? '오름차순 ↑' : '내림차순 ↓';
+  renderSpineShelfPills();
 });
 
 /* ---------------- cover grid (with sort + dropped included) ---------------- */
