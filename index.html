@@ -142,7 +142,7 @@ section{margin:80px 0;}
 #spineShelfRow .pill:only-child{border-radius:10px;}
 .pill.has-spine{padding:0; background:var(--bg);}
 .pill .spine-img{
-  display:block; flex-shrink:0; object-fit:fill;
+  display:block; flex-shrink:0; object-fit:contain; object-position:top;
   transform:rotate(-90deg);
 }
 .pill:hover{filter:brightness(1.05); z-index:5;}
@@ -156,6 +156,10 @@ section{margin:80px 0;}
 }
 .pill .pill-dropped-tag{font-size:10.5px; font-weight:700; margin-left:8px; padding:2px 8px; border-radius:20px; background:rgba(0,0,0,.35); color:#fff;}
 .shelf-caption{color:var(--gray-1); font-size:12px; padding:16px 4px 0; display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px;}
+.page-warning{
+  background:#FBEBEA; border:1px solid #E9C6C3; color:#8B3A34; font-size:13px;
+  padding:12px 14px; border-radius:8px; margin-bottom:12px; line-height:1.6;
+}
 .legend{display:flex; gap:22px; flex-wrap:wrap; margin-top:22px;}
 .legend-item{display:flex; align-items:center; gap:8px; font-size:12.5px; color:var(--ink-soft); font-weight:600;}
 .legend-dot{width:11px; height:11px; border-radius:2px;}
@@ -822,6 +826,7 @@ html.dark-mode .synopsis-delete:hover{ background:#3A2222; }
         <input type="text" id="spineShelfSearchInput" placeholder="🔍 제목·저자 검색" class="book-search-input">
         <button class="sort-dir-btn" id="spineShelfSortBtn" data-dir="asc">오름차순 ↑</button>
       </div>
+      <div class="page-warning" id="spineShelfPageWarning" style="display:none;"></div>
       <div class="shelf-row" id="spineShelfRow"></div>
       <div class="shelf-caption">
         <span>흐린 색 = 중단한 책</span>
@@ -1719,6 +1724,14 @@ function renderSpineShelfPills(){
     if(dateDiff !== 0) return mul*dateDiff;
     return mul*((a.no||0) - (b.no||0));
   });
+  const warningEl = document.getElementById('spineShelfPageWarning');
+  const missingPages = allForSpineShelf.filter(b => !(Number(b.pages) > 0));
+  if(missingPages.length){
+    warningEl.style.display = 'block';
+    warningEl.innerHTML = `⚠️ 페이지 수가 없는 책이 있어요 (두께가 정확하지 않을 수 있어요): ${missingPages.map(b=>b.title).join(', ')}`;
+  } else {
+    warningEl.style.display = 'none';
+  }
   const q = (document.getElementById('spineShelfSearchInput').value || '').trim().toLowerCase();
   const rowWidthPx = spineShelfRow.clientWidth || 320;
   if(!allForSpineShelf.length){
