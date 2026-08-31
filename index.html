@@ -142,7 +142,7 @@ section{margin:80px 0;}
 #spineShelfRow .pill:only-child{border-radius:10px;}
 .pill.has-spine{padding:0; background:var(--bg);}
 .pill .spine-img{
-  display:block; flex-shrink:0; object-fit:contain; object-position:top left;
+  display:block; flex-shrink:0;
 }
 .pill:hover{filter:brightness(1.05); z-index:5;}
 .pill.dropped{
@@ -1678,13 +1678,24 @@ function fillColorPill(pill, b){
 }
 function fillSpinePill(pill, b, hpx, rowWidthPx){
   const droppedTag = b.kind==='중단' ? '<span class="pill-dropped-tag">중단</span>' : '';
-  // Pre-rotation box is narrow(hpx) x tall(rowWidthPx) — exactly matching the
-  // pill's own footprint after the -90deg rotation swaps the axes. object-fit:
-  // contain guarantees the full photo is always visible (never cropped);
-  // object-position:top anchors it to one edge so any leftover space (when the
-  // photo's own proportions don't perfectly match) trails off on the other
-  // side instead of being split evenly.
-  pill.innerHTML = `<img class="spine-img" src="${b.spine}" alt="${b.title}" style="width:${hpx}px; height:${rowWidthPx}px; transform:rotate(-90deg);">${droppedTag}`;
+  // Fix the pre-rotation HEIGHT to the row's full width (rowWidthPx) and let
+  // the pre-rotation WIDTH scale automatically to the photo's own aspect
+  // ratio. After the -90deg rotation this always uses the FULL row length
+  // (no crop, no wasted space along that axis) with zero distortion. The
+  // pill's own thickness is normally the page-count minimum (hpx), but if a
+  // particular photo's natural proportions need more room than that to show
+  // in full, we grow just that one pill's height to fit — thickness stays
+  // page-based for most books, and only goes jagged/taller for the outliers.
+  pill.innerHTML = `<img class="spine-img" src="${b.spine}" alt="${b.title}" style="height:${rowWidthPx}px; width:auto; transform:rotate(-90deg);">${droppedTag}`;
+  const img = pill.querySelector('.spine-img');
+  const growIfNeeded = ()=>{
+    if(img.naturalWidth && img.naturalHeight){
+      const neededThickness = rowWidthPx * (img.naturalWidth / img.naturalHeight);
+      if(neededThickness > hpx) pill.style.height = Math.ceil(neededThickness) + 'px';
+    }
+  };
+  if(img.complete) growIfNeeded();
+  else img.addEventListener('load', growIfNeeded);
 }
 
 function renderShelfPills(){
