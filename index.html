@@ -131,8 +131,14 @@ section{margin:80px 0;}
   padding:0 20px;
   cursor:default;
   position:relative;
+  overflow:hidden;
   transition:filter .15s ease;
   text-align:center;
+}
+.pill.has-spine{padding:0; background:var(--bg);}
+.pill .spine-img{
+  display:block; flex-shrink:0; object-fit:cover;
+  transform:rotate(-90deg);
 }
 .pill:hover{filter:brightness(1.05); z-index:5;}
 .pill.dropped{
@@ -1648,6 +1654,21 @@ const allForShelfBase = [...books.map(b=>({...b, kind:'완독'})), ...dropped.ma
 const minP = Math.min(...allForShelfBase.map(b=>b.pages));
 const maxP = Math.max(...allForShelfBase.map(b=>b.pages));
 let shelfSortOrder = 'newest';
+function fillShelfPill(pill, b, hpx, rowWidthPx){
+  const droppedTag = b.kind==='중단' ? '<span class="pill-dropped-tag">중단</span>' : '';
+  if(b.spine){
+    // spine photos are tall & narrow (portrait). Lay the pill's box out
+    // pre-rotation as narrow(hpx) x tall(rowWidthPx), then rotate -90deg
+    // so the full spine image reads left-to-right inside the short wide pill.
+    pill.innerHTML = `<img class="spine-img" src="${b.spine}" alt="${b.title}" style="width:${hpx}px; height:${rowWidthPx}px;">${droppedTag}`;
+  } else {
+    const txt = tagColor(genreColor[b.genre] || '#9A9690');
+    pill.style.background = genreColor[b.genre] || '#9A9690';
+    pill.style.color = txt;
+    pill.innerHTML = `<div class="pill-title">${b.title}</div>${droppedTag}`;
+  }
+}
+
 function renderShelfPills(){
   shelfRow.innerHTML = '';
   const mul = shelfSortOrder === 'newest' ? -1 : 1;
@@ -1657,6 +1678,7 @@ function renderShelfPills(){
     return mul*((a.no||0) - (b.no||0));
   });
   const q = (document.getElementById('shelfSearchInput').value || '').trim().toLowerCase();
+  const rowWidthPx = shelfRow.clientWidth || 320;
   allForShelf.forEach(b => {
     const hpx = 26 + (b.pages - minP) / (maxP - minP) * 74; // 26px~100px thickness by page count
     const pill = document.createElement('div');
@@ -1664,15 +1686,7 @@ function renderShelfPills(){
     pill.style.height = hpx + 'px';
     pill.dataset.search = `${b.title} ${b.author}`.toLowerCase();
     if(q && !pill.dataset.search.includes(q)) pill.style.display = 'none';
-    if(b.spine){
-      pill.style.background = `url('${b.spine}') center/cover`;
-      pill.innerHTML = b.kind==='중단' ? '<span class="pill-dropped-tag">중단</span>' : '';
-    } else {
-      const txt = tagColor(genreColor[b.genre] || '#9A9690');
-      pill.style.background = genreColor[b.genre] || '#9A9690';
-      pill.style.color = txt;
-      pill.innerHTML = `<div class="pill-title">${b.title}</div>${b.kind==='중단' ? '<span class="pill-dropped-tag">중단</span>' : ''}`;
-    }
+    fillShelfPill(pill, b, hpx, rowWidthPx);
     pill.addEventListener('click', ()=> openSynopsis(b));
     shelfRow.appendChild(pill);
   });
@@ -1697,6 +1711,7 @@ function renderSpineShelfPills(){
     return mul*((a.no||0) - (b.no||0));
   });
   const q = (document.getElementById('spineShelfSearchInput').value || '').trim().toLowerCase();
+  const rowWidthPx = spineShelfRow.clientWidth || 320;
   allForSpineShelf.forEach(b => {
     const hpx = 26 + (b.pages - minP) / (maxP - minP) * 74;
     const pill = document.createElement('div');
@@ -1704,15 +1719,7 @@ function renderSpineShelfPills(){
     pill.style.height = hpx + 'px';
     pill.dataset.search = `${b.title} ${b.author}`.toLowerCase();
     if(q && !pill.dataset.search.includes(q)) pill.style.display = 'none';
-    if(b.spine){
-      pill.style.background = `url('${b.spine}') center/cover`;
-      pill.innerHTML = b.kind==='중단' ? '<span class="pill-dropped-tag">중단</span>' : '';
-    } else {
-      const txt = tagColor(genreColor[b.genre] || '#9A9690');
-      pill.style.background = genreColor[b.genre] || '#9A9690';
-      pill.style.color = txt;
-      pill.innerHTML = `<div class="pill-title">${b.title}</div>${b.kind==='중단' ? '<span class="pill-dropped-tag">중단</span>' : ''}`;
-    }
+    fillShelfPill(pill, b, hpx, rowWidthPx);
     pill.addEventListener('click', ()=> openSynopsis(b));
     spineShelfRow.appendChild(pill);
   });
