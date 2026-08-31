@@ -711,15 +711,15 @@ html.dark-mode .synopsis-delete:hover{ background:#3A2222; }
     <a href="#home" class="active"><b>00</b>홈</a>
     <a href="#genre"><b>01</b>장르</a>
     <a href="#shelf"><b>02</b>서가</a>
-    <a href="#covers"><b>03</b>책장</a>
-    <a href="#wishlist"><b>04</b>읽고싶은 책</a>
-    <a href="#timeline"><b>05</b>타임라인</a>
-    <a href="#ratings"><b>06</b>별점&요일</a>
-    <a href="#savings"><b>07</b>적금</a>
-    <a href="#dropped"><b>08</b>중단</a>
-    <a href="#quotes"><b>09</b>문장</a>
-    <a href="#insight"><b>10</b>인사이트</a>
-    <a href="#spineshelf"><b>11</b>책등 서가</a>
+    <a href="#spineshelf"><b>03</b>책등 서가</a>
+    <a href="#covers"><b>04</b>책장</a>
+    <a href="#wishlist"><b>05</b>읽고싶은 책</a>
+    <a href="#timeline"><b>06</b>타임라인</a>
+    <a href="#ratings"><b>07</b>별점&요일</a>
+    <a href="#savings"><b>08</b>적금</a>
+    <a href="#dropped"><b>09</b>중단</a>
+    <a href="#quotes"><b>10</b>문장</a>
+    <a href="#insight"><b>11</b>인사이트</a>
   </div>
 </nav>
 <button id="openAddBookBtn" class="fab-add">+ 책 추가</button>
@@ -798,9 +798,29 @@ html.dark-mode .synopsis-delete:hover{ background:#3A2222; }
     <div class="legend" id="legend"></div>
   </section>
 
-  <section id="covers" class="tab-panel">
+  <section id="spineshelf" class="tab-panel">
     <div class="section-head">
       <span class="idx">03</span>
+      <div>
+        <h2>책등 서가</h2>
+        <p class="desc">책등 이미지를 올린 책은 실제 책등으로, 못 올린 책은 장르 색 블록으로 보여요. 두께(높이)는 페이지 분량에 비례해요. 정렬 버튼으로 읽은 순서를 오름차순·내림차순으로 바꿔볼 수 있어요.</p>
+      </div>
+    </div>
+    <div class="shelf-wrap">
+      <div class="sort-bar">
+        <input type="text" id="spineShelfSearchInput" placeholder="🔍 제목·저자 검색" class="book-search-input">
+        <button class="sort-dir-btn" id="spineShelfSortBtn" data-dir="asc">오름차순 ↑</button>
+      </div>
+      <div class="shelf-row" id="spineShelfRow"></div>
+      <div class="shelf-caption">
+        <span>흐린 색 = 중단한 책</span>
+      </div>
+    </div>
+  </section>
+
+  <section id="covers" class="tab-panel">
+    <div class="section-head">
+      <span class="idx">04</span>
       <div>
         <h2>책장</h2>
         <p class="desc" id="coverDescText">표지가 있는 책은 실제 표지 이미지를, 없는 책은 장르 컬러 카드로 보여드려요.</p>
@@ -830,7 +850,7 @@ html.dark-mode .synopsis-delete:hover{ background:#3A2222; }
 
   <section id="wishlist" class="tab-panel">
     <div class="section-head">
-      <span class="idx">04</span>
+      <span class="idx">05</span>
       <div><h2>읽고 싶은 책</h2><p class="desc">언젠가 읽고 싶은 책을 목록으로 모아두세요. 오른쪽 위 "+ 책 추가" 버튼에서 상태를 "읽고 싶음"으로 선택해 추가할 수 있어요.</p></div>
     </div>
     <div class="wishlist-empty" id="wishlistEmpty" style="display:none;">아직 담아둔 책이 없어요. 오른쪽 위 "+ 책 추가" 버튼에서 "읽고 싶음"을 선택해 추가해보세요.</div>
@@ -839,7 +859,7 @@ html.dark-mode .synopsis-delete:hover{ background:#3A2222; }
 
   <section id="timeline" class="tab-panel">
     <div class="section-head">
-      <span class="idx">05</span>
+      <span class="idx">06</span>
       <div>
         <h2>완독 타임라인</h2>
         <p class="desc">1월부터 12월까지, 실제로 책을 붙잡고 있던 기간과 월별 완독 권수예요.</p>
@@ -873,7 +893,7 @@ html.dark-mode .synopsis-delete:hover{ background:#3A2222; }
 
   <section id="ratings" class="tab-panel">
     <div class="section-head">
-      <span class="idx">06</span>
+      <span class="idx">07</span>
       <div><h2>별점 & 요일 패턴</h2><p class="desc">몇 점을 자주 줬는지, 어떤 요일에 책을 자주 펼쳤는지예요.</p></div>
     </div>
     <div class="split-two">
@@ -884,7 +904,7 @@ html.dark-mode .synopsis-delete:hover{ background:#3A2222; }
 
   <section id="savings" class="tab-panel">
     <div class="section-head">
-      <span class="idx">07</span>
+      <span class="idx">08</span>
       <div><h2>독서적금</h2><p class="desc">완독할 때마다 책값만큼 적립 · 이자는 제외하고 책값만 반영했어요.</p></div>
     </div>
     <div class="stats" style="margin:0 0 28px;">
@@ -905,7 +925,7 @@ html.dark-mode .synopsis-delete:hover{ background:#3A2222; }
 
   <section id="dropped" class="tab-panel">
     <div class="section-head">
-      <span class="idx">08</span>
+      <span class="idx">09</span>
       <div><h2>중단한 책 4권</h2><p class="desc">완독하지 못하고 덮어둔 책들. 중단한 이유를 적어두면 나중에 다시 볼 때 도움이 될 거예요.</p></div>
     </div>
     <div class="dropped-list" id="droppedList"></div>
@@ -913,7 +933,7 @@ html.dark-mode .synopsis-delete:hover{ background:#3A2222; }
 
   <section id="quotes" class="tab-panel">
     <div class="section-head">
-      <span class="idx">09</span>
+      <span class="idx">10</span>
       <div><h2>인상 깊은 문장</h2><p class="desc">마음에 남은 문장을 책 페이지처럼 기록해두세요. 책마다 접었다 펼 수 있어요.</p></div>
     </div>
     <div class="quote-form">
@@ -932,7 +952,7 @@ html.dark-mode .synopsis-delete:hover{ background:#3A2222; }
 
   <section id="insight" class="tab-panel">
     <div class="section-head">
-      <span class="idx">10</span>
+      <span class="idx">11</span>
       <div>
         <h2>독서 인사이트 & 랩업</h2>
         <p class="desc">책 기록을 업데이트할 때마다 아래 내용도 함께 갱신돼요. 2026년이 끝나길 기다릴 필요 없어요.</p>
@@ -943,26 +963,6 @@ html.dark-mode .synopsis-delete:hover{ background:#3A2222; }
       <h4 class="split-h">지금까지의 랩업 카드</h4>
       <div class="wrap-carousel" id="wrapCarousel"></div>
       <div class="wrap-dots" id="wrapDots"></div>
-    </div>
-  </section>
-
-  <section id="spineshelf" class="tab-panel">
-    <div class="section-head">
-      <span class="idx">11</span>
-      <div>
-        <h2>책등 서가</h2>
-        <p class="desc">책등 이미지를 올린 책은 실제 책등으로, 못 올린 책은 장르 색 블록으로 보여요. 두께(높이)는 페이지 분량에 비례해요. 정렬 버튼으로 읽은 순서를 오름차순·내림차순으로 바꿔볼 수 있어요.</p>
-      </div>
-    </div>
-    <div class="shelf-wrap">
-      <div class="sort-bar">
-        <input type="text" id="spineShelfSearchInput" placeholder="🔍 제목·저자 검색" class="book-search-input">
-        <button class="sort-dir-btn" id="spineShelfSortBtn" data-dir="asc">오름차순 ↑</button>
-      </div>
-      <div class="shelf-row" id="spineShelfRow"></div>
-      <div class="shelf-caption">
-        <span>흐린 색 = 중단한 책</span>
-      </div>
     </div>
   </section>
 
