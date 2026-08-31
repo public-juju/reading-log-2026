@@ -792,7 +792,7 @@ html.dark-mode .synopsis-delete:hover{ background:#3A2222; }
       <span class="idx">02</span>
       <div>
         <h2>서가 · 쌓아보기</h2>
-        <p class="desc">정렬 버튼으로 최신순·오래된순을 바꿔가며 볼 수 있어요. 두께(높이)가 페이지 분량에 비례하고, 옅게 흐려진 책은 중단한 책이에요. 책등 이미지를 올리면 실제 책등이, 없으면 장르 색 블록이 보여요. 책을 누르면 저자·기간 등 상세 정보가 팝업으로 떠요.</p>
+        <p class="desc">정렬 버튼으로 최신순·오래된순을 바꿔가며 볼 수 있어요. 두께(높이)가 페이지 분량에 비례하고, 옅게 흐려진 책은 중단한 책이에요. 책을 누르면 저자·기간 등 상세 정보가 팝업으로 떠요.</p>
       </div>
     </div>
     <div class="shelf-wrap">
@@ -814,7 +814,7 @@ html.dark-mode .synopsis-delete:hover{ background:#3A2222; }
       <span class="idx">03</span>
       <div>
         <h2>책등 서가</h2>
-        <p class="desc">책등 이미지를 올린 책은 실제 책등으로, 못 올린 책은 장르 색 블록으로 보여요. 두께(높이)는 페이지 분량에 비례해요. 정렬 버튼으로 읽은 순서를 오름차순·내림차순으로 바꿔볼 수 있어요.</p>
+        <p class="desc">책등 이미지를 올린 책만 모아서 실제 책장처럼 붙여 보여줘요. 두께(높이)는 페이지 분량에 비례해요. 정렬 버튼으로 읽은 순서를 오름차순·내림차순으로 바꿔볼 수 있어요.</p>
       </div>
     </div>
     <div class="shelf-wrap">
@@ -1659,19 +1659,19 @@ const allForShelfBase = [...books.map(b=>({...b, kind:'완독'})), ...dropped.ma
 const minP = Math.min(...allForShelfBase.map(b=>b.pages));
 const maxP = Math.max(...allForShelfBase.map(b=>b.pages));
 let shelfSortOrder = 'newest';
-function fillShelfPill(pill, b, hpx, rowWidthPx){
+function fillColorPill(pill, b){
   const droppedTag = b.kind==='중단' ? '<span class="pill-dropped-tag">중단</span>' : '';
-  if(b.spine){
-    // spine photos are tall & narrow (portrait). Lay the pill's box out
-    // pre-rotation as narrow(hpx) x tall(rowWidthPx), then rotate -90deg
-    // so the full spine image reads left-to-right inside the short wide pill.
-    pill.innerHTML = `<img class="spine-img" src="${b.spine}" alt="${b.title}" style="width:${hpx}px; height:${rowWidthPx}px;">${droppedTag}`;
-  } else {
-    const txt = tagColor(genreColor[b.genre] || '#9A9690');
-    pill.style.background = genreColor[b.genre] || '#9A9690';
-    pill.style.color = txt;
-    pill.innerHTML = `<div class="pill-title">${b.title}</div>${droppedTag}`;
-  }
+  const txt = tagColor(genreColor[b.genre] || '#9A9690');
+  pill.style.background = genreColor[b.genre] || '#9A9690';
+  pill.style.color = txt;
+  pill.innerHTML = `<div class="pill-title">${b.title}</div>${droppedTag}`;
+}
+function fillSpinePill(pill, b, hpx, rowWidthPx){
+  const droppedTag = b.kind==='중단' ? '<span class="pill-dropped-tag">중단</span>' : '';
+  // spine photos are tall & narrow (portrait). Lay the pill's box out
+  // pre-rotation as narrow(hpx) x tall(rowWidthPx), then rotate -90deg
+  // so the full spine image reads left-to-right inside the short wide pill.
+  pill.innerHTML = `<img class="spine-img" src="${b.spine}" alt="${b.title}" style="width:${hpx}px; height:${rowWidthPx}px;">${droppedTag}`;
 }
 
 function renderShelfPills(){
@@ -1683,15 +1683,14 @@ function renderShelfPills(){
     return mul*((a.no||0) - (b.no||0));
   });
   const q = (document.getElementById('shelfSearchInput').value || '').trim().toLowerCase();
-  const rowWidthPx = shelfRow.clientWidth || 320;
   allForShelf.forEach(b => {
     const hpx = 26 + (b.pages - minP) / (maxP - minP) * 74; // 26px~100px thickness by page count
     const pill = document.createElement('div');
-    pill.className = 'pill' + (b.kind === '중단' ? ' dropped' : '') + (b.spine ? ' has-spine' : '');
+    pill.className = 'pill' + (b.kind === '중단' ? ' dropped' : '');
     pill.style.height = hpx + 'px';
     pill.dataset.search = `${b.title} ${b.author}`.toLowerCase();
     if(q && !pill.dataset.search.includes(q)) pill.style.display = 'none';
-    fillShelfPill(pill, b, hpx, rowWidthPx);
+    fillColorPill(pill, b);
     pill.addEventListener('click', ()=> openSynopsis(b));
     shelfRow.appendChild(pill);
   });
@@ -1704,27 +1703,31 @@ document.getElementById('shelfSortBtn').addEventListener('click', (e)=>{
   renderShelfPills();
 });
 
-/* ---------------- spine shelf (11) — same stacking, sorted asc/desc by reading order ---------------- */
+/* ---------------- spine shelf (03) — only books with an uploaded spine image, flush stacking ---------------- */
 const spineShelfRow = document.getElementById('spineShelfRow');
 let spineShelfSortDir = 'asc';
 function renderSpineShelfPills(){
   spineShelfRow.innerHTML = '';
   const mul = spineShelfSortDir === 'asc' ? 1 : -1;
-  const allForSpineShelf = [...allForShelfBase].sort((a,b)=> {
+  const allForSpineShelf = allForShelfBase.filter(b=>b.spine).sort((a,b)=> {
     const dateDiff = new Date(a.end) - new Date(b.end);
     if(dateDiff !== 0) return mul*dateDiff;
     return mul*((a.no||0) - (b.no||0));
   });
   const q = (document.getElementById('spineShelfSearchInput').value || '').trim().toLowerCase();
   const rowWidthPx = spineShelfRow.clientWidth || 320;
+  if(!allForSpineShelf.length){
+    spineShelfRow.innerHTML = '<div style="padding:20px; color:var(--gray-1); font-size:14px;">책등 이미지를 올린 책이 아직 없어요. "+ 책 추가"에서 책등 이미지를 올려보세요.</div>';
+    return;
+  }
   allForSpineShelf.forEach(b => {
     const hpx = 26 + (b.pages - minP) / (maxP - minP) * 74;
     const pill = document.createElement('div');
-    pill.className = 'pill' + (b.kind === '중단' ? ' dropped' : '') + (b.spine ? ' has-spine' : '');
+    pill.className = 'pill has-spine' + (b.kind === '중단' ? ' dropped' : '');
     pill.style.height = hpx + 'px';
     pill.dataset.search = `${b.title} ${b.author}`.toLowerCase();
     if(q && !pill.dataset.search.includes(q)) pill.style.display = 'none';
-    fillShelfPill(pill, b, hpx, rowWidthPx);
+    fillSpinePill(pill, b, hpx, rowWidthPx);
     pill.addEventListener('click', ()=> openSynopsis(b));
     spineShelfRow.appendChild(pill);
   });
