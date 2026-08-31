@@ -1273,9 +1273,10 @@ async function storageSet(key, value){
     try{
       const { error } = await sb.from('reading_log_kv').upsert({ key, value, updated_at: new Date().toISOString() });
       if(!error) ok = true;
-    }catch(e){}
+      else { ok = false; console.error('Supabase save failed for', key, error); }
+    }catch(e){ ok = false; console.error('Supabase save threw for', key, e); }
   }
-  try{ localStorage.setItem(LS_PREFIX+key, JSON.stringify(value)); ok = true; }catch(e){}
+  try{ localStorage.setItem(LS_PREFIX+key, JSON.stringify(value)); if(!sb && !window.storage) ok = true; }catch(e){ console.error('localStorage save failed for', key, e); }
   return ok;
 }
 async function storageDelete(key){
@@ -3038,11 +3039,31 @@ function openEditBookModal(book, currentStatus){
   addBookOverlay.classList.add('open');
 }
 
-function fileToDataUri(file){
+function fileToDataUri(file, maxDim = 900, quality = 0.82){
   return new Promise((resolve, reject)=>{
     if(!file){ resolve(null); return; }
     const reader = new FileReader();
-    reader.onload = ()=> resolve(reader.result);
+    reader.onload = ()=>{
+      const img = new Image();
+      img.onload = ()=>{
+        try{
+          let { width, height } = img;
+          if(width > maxDim || height > maxDim){
+            if(width >= height){ height = Math.round(height * (maxDim/width)); width = maxDim; }
+            else { width = Math.round(width * (maxDim/height)); height = maxDim; }
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = width; canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL('image/jpeg', quality));
+        }catch(e){
+          resolve(reader.result); // fall back to the uncompressed original if canvas processing fails
+        }
+      };
+      img.onerror = ()=> resolve(reader.result); // fall back if the image can't be decoded for resizing
+      img.src = reader.result;
+    };
     reader.onerror = reject;
     reader.readAsDataURL(file);
   });
@@ -3146,13 +3167,15 @@ addBookForm.addEventListener('submit', async (e)=>{
   if(cover) newBook.cover = cover;
   if(spine) newBook.spine = spine;
 
+  let saveOk = true;
   if(status === '완독'){
     newBook.rating = rating;
     if(review) newBook.review = review;
     newBook.status = '완독';
     newBook.price = price;
     books.push(newBook);
-    await storageSet('allBooks', books);
+    saveOk = await storageSet('allBooks', books);
+    if(!saveOk) books.pop();
   } else if(status === '읽는 중'){
     newBook.price = price;
     if(abEditContext && abEditContext.sourceStatus === '읽는 중'){
@@ -3160,10 +3183,16 @@ addBookForm.addEventListener('submit', async (e)=>{
       if(abEditContext.progressUnit != null) newBook.progressUnit = abEditContext.progressUnit;
     }
     reading.push(newBook);
-    await storageSet('allReading', reading);
+    saveOk = await storageSet('allReading', reading);
+    if(!saveOk) reading.pop();
   } else {
     dropped.push(newBook);
-    await storageSet('allDropped', dropped);
+    saveOk = await storageSet('allDropped', dropped);
+    if(!saveOk) dropped.pop();
+  }
+  if(!saveOk){
+    alert('저장에 실패했어요. 사진 용량이 너무 크거나 인터넷 연결 문제일 수 있어요. 잠시 후 다시 시도해주세요.');
+    return;
   }
 
   if(abSelectedSynopsis){
