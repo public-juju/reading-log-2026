@@ -18,13 +18,10 @@
 // Usage from the frontend:
 //   GET /api/book-search?action=search&query=제목
 //   GET /api/book-search?action=cover&url=<encoded cover image url>
-//   GET /api/book-search?action=pages&isbn=<isbn>
 //
 // Note: Kakao's book API doesn't return page count or a genre/category
-// field. Genre is left on its default for the user to fill in. Page count
-// is opportunistically looked up from Google Books by ISBN (action=pages)
-// as a bonus best-effort — if Google doesn't have it either, the frontend
-// leaves 페이지 blank same as before.
+// field, so those aren't auto-filled — the frontend leaves 페이지 blank
+// and genre on its default for the user to fill in.
 
 const KAKAO_SEARCH_URL = "https://dapi.kakao.com/v3/search/book";
 
@@ -103,44 +100,7 @@ module.exports = async function handler(req, res) {
       return;
     }
 
-    if (action === "pages") {
-      // Kakao's book API doesn't return page count, so we opportunistically
-      // check Google Books by ISBN as a bonus (no key needed for this low-
-      // volume public lookup). If Google doesn't have it, we just return
-      // null and the frontend leaves the field blank as before.
-      // Kakao gives us "ISBN10 ISBN13" (space-separated) when both exist,
-      // but Google Books doesn't always index a title under both formats —
-      // so we try each candidate in turn instead of just the first one.
-      const isbnCandidates = (req.query.isbn || "").trim().split(" ").filter(Boolean);
-      if (!isbnCandidates.length) {
-        res.status(200).json({ pages: null });
-        return;
-      }
-      let pageCount = null;
-      for (const isbn of isbnCandidates) {
-        try {
-          const gRes = await fetch(
-            `https://www.googleapis.com/books/v1/volumes?q=isbn:${encodeURIComponent(isbn)}`
-          );
-          if (gRes.ok) {
-            const gData = await gRes.json();
-            const found = gData.items && gData.items[0] && gData.items[0].volumeInfo
-              ? gData.items[0].volumeInfo.pageCount || null
-              : null;
-            if (found) {
-              pageCount = found;
-              break;
-            }
-          }
-        } catch (e) {
-          // try the next candidate
-        }
-      }
-      res.status(200).json({ pages: pageCount });
-      return;
-    }
-
-    res.status(400).json({ error: "action은 search, cover 또는 pages 이어야 해요." });
+    res.status(400).json({ error: "action은 search 또는 cover 이어야 해요." });
   } catch (err) {
     res.status(500).json({ error: String(err) });
   }
