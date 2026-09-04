@@ -1,46 +1,38 @@
-// Vercel serverless function: proxies Naver Book Search API so the static
-// frontend can search/add books without hitting browser CORS restrictions.
+// Vercel serverless function: proxies Kakao (Daum) Book Search API so the
+// static frontend can search/add books without hitting browser CORS
+// restrictions.
 //
-// (Switched from Aladin OpenAPI, which Aladin is shutting down — new key
-// issuance ended 2026-09-04, existing keys stop working 2026-10-30.)
+// (Switched from Aladin OpenAPI, which Aladin shut down for new users on
+// 2026-09-04 and existing keys stop 2026-10-30. Naver's Search API was also
+// tried, but Naver stopped accepting new 검색 API applications entirely —
+// see https://developers.naver.com/docs/serviceapi/search/book/book.md)
 //
-// Set these environment variables in Vercel (Project Settings > Environment
+// Set this environment variable in Vercel (Project Settings > Environment
 // Variables), then redeploy:
-//   NAVER_CLIENT_ID
-//   NAVER_CLIENT_SECRET
-// (Get them free at https://developers.naver.com/apps/#/register
-//  — register an app with the "검색" (Search) API enabled.)
+//   KAKAO_REST_API_KEY
+// (Get it free at https://developers.kakao.com/console/app
+//  — create an app, then copy the "REST API 키" from the app's summary page.
+//  No extra "enable search API" step needed — book search works out of the
+//  box with any app's REST API key.)
 //
 // Usage from the frontend:
 //   GET /api/book-search?action=search&query=제목
 //   GET /api/book-search?action=cover&url=<encoded cover image url>
 //
-// Note: unlike Aladin, Naver's book API doesn't return page count or a
-// genre/category field, so those aren't auto-filled anymore — the frontend
+// Note: like the Naver attempt, Kakao's book API doesn't return page count
+// or a genre/category field, so those aren't auto-filled — the frontend
 // leaves 페이지 blank and genre on its default for the user to fill in.
 
-const NAVER_SEARCH_URL = "https://openapi.naver.com/v1/search/book.json";
-
-function stripHtml(s) {
-  return (s || "")
-    .replace(/<\/?b>/g, "")
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .trim();
-}
+const KAKAO_SEARCH_URL = "https://dapi.kakao.com/v3/search/book";
 
 module.exports = async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Content-Type", "application/json; charset=utf-8");
 
-  const CLIENT_ID = process.env.NAVER_CLIENT_ID;
-  const CLIENT_SECRET = process.env.NAVER_CLIENT_SECRET;
-  if (!CLIENT_ID || !CLIENT_SECRET) {
+  const REST_API_KEY = process.env.KAKAO_REST_API_KEY;
+  if (!REST_API_KEY) {
     res.status(500).json({
-      error: "NAVER_CLIENT_ID / NAVER_CLIENT_SECRET이 설정되지 않았어요. Vercel 환경변수를 확인해주세요.",
+      error: "KAKAO_REST_API_KEY가 설정되지 않았어요. Vercel 환경변수를 확인해주세요.",
     });
     return;
   }
@@ -54,31 +46,28 @@ module.exports = async function handler(req, res) {
         res.status(400).json({ error: "query가 필요해요." });
         return;
       }
-      const naverUrl = `${NAVER_SEARCH_URL}?query=${encodeURIComponent(q)}&display=15&sort=sim`;
-      const nRes = await fetch(naverUrl, {
-        headers: {
-          "X-Naver-Client-Id": CLIENT_ID,
-          "X-Naver-Client-Secret": CLIENT_SECRET,
-        },
+      const kakaoUrl = `${KAKAO_SEARCH_URL}?target=title&size=15&query=${encodeURIComponent(q)}`;
+      const kRes = await fetch(kakaoUrl, {
+        headers: { Authorization: `KakaoAK ${REST_API_KEY}` },
       });
-      if (!nRes.ok) {
-        const errText = await nRes.text();
+      if (!kRes.ok) {
+        const errText = await kRes.text();
         res.status(502).json({
-          error: `네이버 API 오류 (${nRes.status})`,
+          error: `카카오 API 오류 (${kRes.status})`,
           raw: errText.slice(0, 300),
         });
         return;
       }
-      const data = await nRes.json();
-      const items = (data.items || []).map((it) => ({
-        title: stripHtml(it.title),
-        author: stripHtml(it.author),
-        publisher: stripHtml(it.publisher),
-        pubDate: it.pubdate || "",
-        cover: it.image || "",
-        isbn: it.isbn || "",
-        priceStandard: it.price ? Number(it.price) : null,
-        description: stripHtml(it.description),
+      const data = await kRes.json();
+      const items = (data.documents || []).map((d) => ({
+        title: d.title || "",
+        author: (d.authors || []).join(", "),
+        publisher: d.publisher || "",
+        pubDate: (d.datetime || "").slice(0, 10).replace(/-/g, ""),
+        cover: d.thumbnail || "",
+        isbn: d.isbn || "",
+        priceStandard: d.price || d.sale_price || null,
+        description: d.contents || "",
       }));
       res.status(200).json({ items });
       return;

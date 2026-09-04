@@ -995,7 +995,7 @@ html.dark-mode .synopsis-delete:hover{ background:#3A2222; }
 
     <div class="ab-search-block">
       <div class="ab-search-row">
-        <input type="text" id="abSearchInput" placeholder="책 제목으로 검색 (네이버)">
+        <input type="text" id="abSearchInput" placeholder="책 제목으로 검색 (카카오)">
         <button type="button" id="abSearchBtn">검색</button>
       </div>
       <div id="abSearchResults"></div>
@@ -2781,8 +2781,8 @@ async function selectAbSearchResult(idx){
   const resultsEl = document.getElementById('abSearchResults');
   resultsEl.innerHTML = '<div class="ab-search-loading">불러오는 중...</div>';
   document.getElementById('abTitle').value = d.title || '';
-  // Naver's author field often looks like "지은이^옮긴이" separated by ^ - keep first name only
-  document.getElementById('abAuthor').value = (d.author || '').split('^')[0].trim();
+  // Kakao's authors field is a list joined with ", " when there are multiple - keep first name only
+  document.getElementById('abAuthor').value = (d.author || '').split(',')[0].trim();
   if(d.priceStandard) document.getElementById('abPrice').value = d.priceStandard;
   // Naver's book API doesn't provide page count or genre/category, unlike Aladin —
   // those are left for the user to fill in manually.
