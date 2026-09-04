@@ -995,7 +995,7 @@ html.dark-mode .synopsis-delete:hover{ background:#3A2222; }
 
     <div class="ab-search-block">
       <div class="ab-search-row">
-        <input type="text" id="abSearchInput" placeholder="책 제목으로 검색 (알라딘)">
+        <input type="text" id="abSearchInput" placeholder="책 제목으로 검색 (네이버)">
         <button type="button" id="abSearchBtn">검색</button>
       </div>
       <div id="abSearchResults"></div>
@@ -2730,24 +2730,15 @@ const MOTIFS = ['circle','blob','stripe','scribble'];
 let abSelectedCover = null;
 let abSelectedSynopsis = null;
 
-function guessGenreFromCategory(categoryName){
-  if(!categoryName) return null;
-  const c = categoryName;
-  if(c.includes('에세이')) return '에세이';
-  if(c.includes('인문')) return '인문';
-  if(c.includes('자기계발')) return '자기계발';
-  if(c.includes('외국') || c.includes('해외')) return '해외소설';
-  if(c.includes('소설')) return '국내소설';
-  return null;
-}
-
 function resetAbSearch(){
   document.getElementById('abSearchInput').value = '';
   document.getElementById('abSearchResults').innerHTML = '';
   abSelectedCover = null;
   abSelectedSynopsis = null;
+  abLastSearchResults = [];
 }
 
+let abLastSearchResults = [];
 document.getElementById('abSearchBtn').addEventListener('click', async ()=>{
   const q = document.getElementById('abSearchInput').value.trim();
   if(!q) return;
@@ -2764,8 +2755,9 @@ document.getElementById('abSearchBtn').addEventListener('click', async ()=>{
       resultsEl.innerHTML = '<div class="ab-search-empty">검색 결과가 없어요. 직접 입력해주세요.</div>';
       return;
     }
+    abLastSearchResults = data.items;
     resultsEl.innerHTML = '';
-    data.items.forEach(it=>{
+    data.items.forEach((it, idx)=>{
       const row = document.createElement('div');
       row.className = 'ab-search-item';
       row.innerHTML = `
@@ -2775,7 +2767,7 @@ document.getElementById('abSearchBtn').addEventListener('click', async ()=>{
           <div class="ab-search-item-meta">${it.author || ''}${it.publisher ? ' · ' + it.publisher : ''}</div>
         </div>
       `;
-      row.addEventListener('click', ()=> selectAbSearchResult(it.itemId));
+      row.addEventListener('click', ()=> selectAbSearchResult(idx));
       resultsEl.appendChild(row);
     });
   }catch(e){
@@ -2783,31 +2775,29 @@ document.getElementById('abSearchBtn').addEventListener('click', async ()=>{
   }
 });
 
-async function selectAbSearchResult(itemId){
+async function selectAbSearchResult(idx){
+  const d = abLastSearchResults[idx];
+  if(!d) return;
   const resultsEl = document.getElementById('abSearchResults');
   resultsEl.innerHTML = '<div class="ab-search-loading">불러오는 중...</div>';
-  try{
-    const res = await fetch(`/api/book-search?action=detail&itemId=${encodeURIComponent(itemId)}`);
-    const d = await res.json();
-    if(d.error){
-      resultsEl.innerHTML = `<div class="ab-search-empty">불러오기에 실패했어요: ${d.error}</div>`;
-      return;
+  document.getElementById('abTitle').value = d.title || '';
+  // Naver's author field often looks like "지은이^옮긴이" separated by ^ - keep first name only
+  document.getElementById('abAuthor').value = (d.author || '').split('^')[0].trim();
+  if(d.priceStandard) document.getElementById('abPrice').value = d.priceStandard;
+  // Naver's book API doesn't provide page count or genre/category, unlike Aladin —
+  // those are left for the user to fill in manually.
+  abSelectedSynopsis = d.description || null;
+  abSelectedCover = null;
+  if(d.cover){
+    try{
+      const coverRes = await fetch(`/api/book-search?action=cover&url=${encodeURIComponent(d.cover)}`);
+      const coverData = await coverRes.json();
+      abSelectedCover = coverData.cover || d.cover;
+    }catch(e){
+      abSelectedCover = d.cover;
     }
-    document.getElementById('abTitle').value = d.title || '';
-    // Aladin author field often looks like "지은이 (지은이), 옮긴이 (옮긴이)" - keep first name only
-    document.getElementById('abAuthor').value = (d.author || '').split(',')[0].replace(/\(.*?\)/g,'').trim();
-    if(d.priceStandard) document.getElementById('abPrice').value = d.priceStandard;
-    if(d.pages) document.getElementById('abPages').value = d.pages;
-    const guessedGenre = guessGenreFromCategory(d.categoryName);
-    if(guessedGenre && [...abGenreSelect.options].some(o=>o.value===guessedGenre)){
-      abGenreSelect.value = guessedGenre;
-    }
-    abSelectedCover = d.cover || null;
-    abSelectedSynopsis = d.description || null;
-    resultsEl.innerHTML = `<div class="ab-search-selected">"${d.title}" 선택했어요 — 장르·페이지 확인하고, 읽은 기간·별점은 직접 채워주세요.</div>`;
-  }catch(e){
-    resultsEl.innerHTML = '<div class="ab-search-empty">불러오기에 실패했어요. 잠시 후 다시 시도해주세요.</div>';
   }
+  resultsEl.innerHTML = `<div class="ab-search-selected">"${d.title}" 선택했어요 — 장르·페이지는 자동으로 안 채워지니 직접 확인해주시고, 읽은 기간·별점도 채워주세요.</div>`;
 }
 
 function populateGenreSelect(){
