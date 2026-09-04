@@ -2784,8 +2784,8 @@ async function selectAbSearchResult(idx){
   // Kakao's authors field is a list joined with ", " when there are multiple - keep first name only
   document.getElementById('abAuthor').value = (d.author || '').split(',')[0].trim();
   if(d.priceStandard) document.getElementById('abPrice').value = d.priceStandard;
-  // Naver's book API doesn't provide page count or genre/category, unlike Aladin —
-  // those are left for the user to fill in manually.
+  // Kakao's book API doesn't provide page count or genre/category. Genre is
+  // left for the user to fill in; page count gets a bonus lookup below.
   abSelectedSynopsis = d.description || null;
   abSelectedCover = null;
   if(d.cover){
@@ -2797,7 +2797,19 @@ async function selectAbSearchResult(idx){
       abSelectedCover = d.cover;
     }
   }
-  resultsEl.innerHTML = `<div class="ab-search-selected">"${d.title}" 선택했어요 — 장르·페이지는 자동으로 안 채워지니 직접 확인해주시고, 읽은 기간·별점도 채워주세요.</div>`;
+  let foundPages = false;
+  if(d.isbn){
+    try{
+      const pagesRes = await fetch(`/api/book-search?action=pages&isbn=${encodeURIComponent(d.isbn)}`);
+      const pagesData = await pagesRes.json();
+      if(pagesData.pages){
+        document.getElementById('abPages').value = pagesData.pages;
+        foundPages = true;
+      }
+    }catch(e){}
+  }
+  const pageNote = foundPages ? '페이지는 채웠어요, 장르는' : '장르·페이지는';
+  resultsEl.innerHTML = `<div class="ab-search-selected">"${d.title}" 선택했어요 — ${pageNote} 자동으로 안 채워지니 직접 확인해주시고, 읽은 기간·별점도 채워주세요.</div>`;
 }
 
 function populateGenreSelect(){

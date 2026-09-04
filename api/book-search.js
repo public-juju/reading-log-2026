@@ -18,10 +18,13 @@
 // Usage from the frontend:
 //   GET /api/book-search?action=search&query=제목
 //   GET /api/book-search?action=cover&url=<encoded cover image url>
+//   GET /api/book-search?action=pages&isbn=<isbn>
 //
-// Note: like the Naver attempt, Kakao's book API doesn't return page count
-// or a genre/category field, so those aren't auto-filled — the frontend
-// leaves 페이지 blank and genre on its default for the user to fill in.
+// Note: Kakao's book API doesn't return page count or a genre/category
+// field. Genre is left on its default for the user to fill in. Page count
+// is opportunistically looked up from Google Books by ISBN (action=pages)
+// as a bonus best-effort — if Google doesn't have it either, the frontend
+// leaves 페이지 blank same as before.
 
 const KAKAO_SEARCH_URL = "https://dapi.kakao.com/v3/search/book";
 
@@ -100,7 +103,36 @@ module.exports = async function handler(req, res) {
       return;
     }
 
-    res.status(400).json({ error: "action은 search 또는 cover 이어야 해요." });
+    if (action === "pages") {
+      // Kakao's book API doesn't return page count, so we opportunistically
+      // check Google Books by ISBN as a bonus (no key needed for this low-
+      // volume public lookup). If Google doesn't have it, we just return
+      // null and the frontend leaves the field blank as before.
+      const isbn = (req.query.isbn || "").trim().split(" ")[0];
+      if (!isbn) {
+        res.status(200).json({ pages: null });
+        return;
+      }
+      try {
+        const gRes = await fetch(
+          `https://www.googleapis.com/books/v1/volumes?q=isbn:${encodeURIComponent(isbn)}`
+        );
+        if (gRes.ok) {
+          const gData = await gRes.json();
+          const pageCount = gData.items && gData.items[0] && gData.items[0].volumeInfo
+            ? gData.items[0].volumeInfo.pageCount || null
+            : null;
+          res.status(200).json({ pages: pageCount });
+        } else {
+          res.status(200).json({ pages: null });
+        }
+      } catch (e) {
+        res.status(200).json({ pages: null });
+      }
+      return;
+    }
+
+    res.status(400).json({ error: "action은 search, cover 또는 pages 이어야 해요." });
   } catch (err) {
     res.status(500).json({ error: String(err) });
   }
