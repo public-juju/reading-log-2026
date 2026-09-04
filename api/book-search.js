@@ -108,27 +108,35 @@ module.exports = async function handler(req, res) {
       // check Google Books by ISBN as a bonus (no key needed for this low-
       // volume public lookup). If Google doesn't have it, we just return
       // null and the frontend leaves the field blank as before.
-      const isbn = (req.query.isbn || "").trim().split(" ")[0];
-      if (!isbn) {
+      // Kakao gives us "ISBN10 ISBN13" (space-separated) when both exist,
+      // but Google Books doesn't always index a title under both formats —
+      // so we try each candidate in turn instead of just the first one.
+      const isbnCandidates = (req.query.isbn || "").trim().split(" ").filter(Boolean);
+      if (!isbnCandidates.length) {
         res.status(200).json({ pages: null });
         return;
       }
-      try {
-        const gRes = await fetch(
-          `https://www.googleapis.com/books/v1/volumes?q=isbn:${encodeURIComponent(isbn)}`
-        );
-        if (gRes.ok) {
-          const gData = await gRes.json();
-          const pageCount = gData.items && gData.items[0] && gData.items[0].volumeInfo
-            ? gData.items[0].volumeInfo.pageCount || null
-            : null;
-          res.status(200).json({ pages: pageCount });
-        } else {
-          res.status(200).json({ pages: null });
+      let pageCount = null;
+      for (const isbn of isbnCandidates) {
+        try {
+          const gRes = await fetch(
+            `https://www.googleapis.com/books/v1/volumes?q=isbn:${encodeURIComponent(isbn)}`
+          );
+          if (gRes.ok) {
+            const gData = await gRes.json();
+            const found = gData.items && gData.items[0] && gData.items[0].volumeInfo
+              ? gData.items[0].volumeInfo.pageCount || null
+              : null;
+            if (found) {
+              pageCount = found;
+              break;
+            }
+          }
+        } catch (e) {
+          // try the next candidate
         }
-      } catch (e) {
-        res.status(200).json({ pages: null });
       }
+      res.status(200).json({ pages: pageCount });
       return;
     }
 
